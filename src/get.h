@@ -9,6 +9,9 @@ struct response {
     int length;
 };
 
+struct response* new_response(void);
+void free_response(struct response*);
+
 typedef struct buffer_length_tracker {
     char *content;
     int length;

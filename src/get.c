@@ -1,28 +1,39 @@
+#include <curl/curl.h>
+#include <regex.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <curl/curl.h>
 
-#include "get.h"
 #include "config.h"
+#include "get.h"
+#include "reg.h"
+
+struct response* new_response(void) {
+    return malloc(sizeof(struct response));
+};
+
+void free_response(struct response *self) {
+    free(self->type);
+    free(self);
+};
 
 buffer_t* new_buffer(void) {
-    buffer_t *buf = malloc(sizeof(buffer_t));
-    buf->content = malloc(0);
-    buf->length = 0;
-    return buf;
+    buffer_t *self = malloc(sizeof(buffer_t));
+    self->content = malloc(0);
+    self->length = 0;
+    return self;
 };
 
-void free_buffer(buffer_t *buf) {
-    free(buf->content);
-    free(buf);
+void free_buffer(buffer_t *self) {
+    free(self->content);
+    free(self);
 };
 
-size_t append_buffer(char *buffer, size_t len, size_t n_items, buffer_t *buf) {
+size_t append_buffer(char *buffer, size_t len, size_t n_items, buffer_t *self) {
     size_t n_chars = len * n_items;
-    buf->length += n_chars;
-    buf->content = realloc(buf->content, buf->length + 1);
-    strcat(buf->content, buffer);
+    self->length += n_chars;
+    self->content = realloc(self->content, self->length + 1);
+    strcat(self->content, buffer);
     return n_chars;
 };
 
@@ -61,6 +72,9 @@ CURLcode get(struct response *re, char *url) {
 
     re->content = ct_buf->content;
     re->length = ct_buf->length;
+
+    char *pattern = "content-type:[ ]*([^\r\n]*)";
+    re->type = regex_match_one_subexpr(pattern, hd_buf->content, REG_EXTENDED | REG_ICASE);
 
     free_buffer(hd_buf);
     free_buffer(ct_buf);
