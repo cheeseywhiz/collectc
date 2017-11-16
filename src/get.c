@@ -8,10 +8,6 @@
 #include "get.h"
 #include "reg.h"
 
-struct response* new_response(void) {
-    return malloc(sizeof(struct response));
-};
-
 void free_response(struct response *self) {
     free(self->type);
     free(self);
@@ -37,7 +33,8 @@ size_t append_buffer(char *buffer, size_t len, size_t n_items, buffer_t *self) {
     return n_chars;
 };
 
-CURLcode get(struct response *re, char *url) {
+struct response* get_response(char *url) {
+    struct response *re = malloc(sizeof(struct response));
     CURLcode res = 0;
     CURL *curl;
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -45,7 +42,8 @@ CURLcode get(struct response *re, char *url) {
 
     if (!curl) {
         fprintf(stderr, "curl init failed\n");
-        return 1;
+        free_response(re);
+        return NULL;
     };
 
     char *ua_prefix = "collect/";
@@ -68,6 +66,8 @@ CURLcode get(struct response *re, char *url) {
 
     if (res != CURLE_OK) {
         fprintf(stderr, "curl_easy_perform failed (%s)\n", curl_easy_strerror(res));
+        free_response(re);
+        return NULL;
     };
 
     re->content = ct_buf->content;
@@ -81,5 +81,5 @@ CURLcode get(struct response *re, char *url) {
 
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-    return res;
+    return re;
 };

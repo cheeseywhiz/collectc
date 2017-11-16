@@ -9,7 +9,6 @@ struct response {
     int length;
 };
 
-struct response* new_response(void);
 void free_response(struct response*);
 
 typedef struct buffer_length_tracker {
@@ -22,6 +21,6 @@ void free_buffer(buffer_t*);
 size_t append_buffer(char*, size_t, size_t, buffer_t*);
 
 /* Abstraction for curl performance */
-CURLcode get(struct response*, char*);
+struct response* get_response(char*);
 
 #endif /* GET_H */

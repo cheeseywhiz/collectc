@@ -25,23 +25,23 @@ jsmn:
 
 reg:
 	$(eval NEW_OBJ=$(OBJ)/$@.so)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -shared $(OBJECTS) $(SRC)/$@.c -o $(NEW_OBJ)
+	$(CC) $(CFLAGS) -shared $(OBJECTS) $(SRC)/$@.c -o $(NEW_OBJ) $(LDFLAGS) $(LDLIBS)
 	$(eval OBJECTS+=$(NEW_OBJ))
 
 get: reg
 	$(eval NEW_OBJ=$(OBJ)/$@.so)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) $(shell pkg-config --libs --cflags libcurl) -shared $(OBJECTS) $(SRC)/$@.c -o $(NEW_OBJ)
+	$(CC) $(CFLAGS) -shared $(OBJECTS) $(SRC)/$@.c -o $(NEW_OBJ) $(shell pkg-config --libs --cflags libcurl) $(LDFLAGS) $(LDLIBS)
 	$(eval OBJECTS+=$(NEW_OBJ))
 
 objects: reg get
 
 collect: get
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/collect
+	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/collect $(LDFLAGS) $(LDLIBS)
 
 test: setup_test jsontest.c
 
 setup_test: clean build_dirs
 	$(eval CFLAGS+=-I$(SRC))
 
-jsontest.c: setup_test jsmn
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) $(OBJECTS) $(TEST)/jsontest.c -o $(BUILD)/jsontest
+jsontest.c: setup_test jsmn get
+	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/jsontest.c -o $(BUILD)/jsontest $(LDFLAGS) $(LDLIBS)
