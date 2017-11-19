@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "reg.h"
+#include "stringutil.h"
 
 char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     char *needle;
@@ -14,15 +15,9 @@ char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     if (regcomp(&reg, pattern, cflags) != 0) goto fail;
     if (regexec(&reg, haystack, n_matches, pmatch, 0) != 0) goto fail;
 
-    int start = pmatch[1].rm_so;
-    int end = pmatch[1].rm_eo;
-    int needle_length = end - start;
-    int haystack_length = strlen(haystack);
+    needle = str_slice(haystack, pmatch[1].rm_so, pmatch[1].rm_eo);
 
-    if (needle_length > 0 && 0 <= start && start < haystack_length && 0 < end && end <= haystack_length) {
-        needle = malloc(needle_length + 1);
-        bzero(needle, needle_length + 1);
-        needle = strncpy(needle, haystack + start, needle_length);
+    if (needle) {
         goto cleanup;
     };
 
@@ -36,13 +31,11 @@ cleanup:
 };
 
 int regex_starts_with(char *haystack, char *needle) {
-    for (int i = 0;; i++) {
+    for (int i = 0; ; i++) {
         if (i == strlen(needle)) {
-            break;
+            return 1;
         } else if ((i == strlen(haystack)) || (i > strlen(needle)) || (i > strlen(haystack)) || (*(haystack + i) != *(needle + i))) {
             return 0;
         };
     };
-
-    return 1;
 };

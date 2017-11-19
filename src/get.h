@@ -1,5 +1,5 @@
 #ifndef GET_H
-#define GET_H 1
+#define GET_H
 
 #include <curl/curl.h>
 

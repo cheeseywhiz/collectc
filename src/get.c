@@ -10,6 +10,7 @@
 
 void free_response(struct response *self) {
     free(self->type);
+    free(self->content);
     free(self);
 };
 
@@ -70,12 +71,17 @@ struct response* get_response(char *url) {
         return NULL;
     };
 
-    re->content = ct_buf->content;
+    re->content = malloc(ct_buf->length + 1);
+    strcpy(re->content, ct_buf->content);
+
     re->length = ct_buf->length;
 
     char *pattern = "content-type:[ ]*([^\r\n]*)";
-    re->type = regex_match_one_subexpr(pattern, hd_buf->content, REG_EXTENDED | REG_ICASE);
+    char *match = regex_match_one_subexpr(pattern, hd_buf->content, REG_EXTENDED | REG_ICASE);
+    re->type = malloc(strlen(match));
+    strcpy(re->type, match);
 
+    free(match);
     free_buffer(hd_buf);
     free_buffer(ct_buf);
 

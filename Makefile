@@ -18,30 +18,30 @@ build_dirs:
 	@mkdir -p $(OBJ)
 
 jsmn:
-	@cd $(LIB)/$@ && make
+	@cd $(LIB)/$@ && CFLAGS=-DJSMN_PARENT_LINKS make
 	$(eval CFLAGS+=-I$(LIB)/$@)
 	$(eval LDFLAGS+=-L$(LIB)/$@)
 	$(eval LDLIBS+=-ljsmn)
 
-reg:
-	$(eval NEW_OBJ=$(OBJ)/$@.so)
-	$(CC) $(CFLAGS) -shared $(OBJECTS) $(SRC)/$@.c -o $(NEW_OBJ) $(LDFLAGS) $(LDLIBS)
+src/%:
+	$(eval NEW_OBJ=$(OBJ)/$(@F).so)
+	$(CC) $(CFLAGS) -shared $(OBJECTS) $(SRC)/$(@F).c -o $(NEW_OBJ) $(LDFLAGS) $(LDLIBS)
 	$(eval OBJECTS+=$(NEW_OBJ))
 
-get: reg
-	$(eval NEW_OBJ=$(OBJ)/$@.so)
-	$(CC) $(CFLAGS) -shared $(OBJECTS) $(SRC)/$@.c -o $(NEW_OBJ) $(shell pkg-config --libs --cflags libcurl) $(LDFLAGS) $(LDLIBS)
-	$(eval OBJECTS+=$(NEW_OBJ))
+src/reg: src/stringutil
 
-objects: reg get
+src/get: src/reg
+src/get: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
 
-collect: get
-	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/collect $(LDFLAGS) $(LDLIBS)
+src/jsmnutils: src/reg
 
-test: setup_test jsontest.c
+collect: src/get
+	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
+
+test: setup_test jsontest
 
 setup_test: clean build_dirs
 	$(eval CFLAGS+=-I$(SRC))
 
-jsontest.c: setup_test jsmn get
-	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/jsontest.c -o $(BUILD)/jsontest $(LDFLAGS) $(LDLIBS)
+jsontest: setup_test jsmn src/get src/jsmnutils
+	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/$@.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
