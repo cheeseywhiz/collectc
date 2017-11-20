@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "get.h"
 #include "reg.h"
@@ -28,6 +29,12 @@ int main(int argc, char **argv) {
         struct response *im = get_response(url);
         if (regex_starts_with(im->type, "image")) {
             fprintf(stderr, "%s\n", url);
+
+            FILE *im_file = fopen("a.jpg", "w");
+            int *ptr = (int *)im->content;
+            fwrite(ptr, sizeof(ptr[0]), sizeof(ptr)/sizeof(ptr[0]), im_file);
+            fclose(im_file);
+
             free_response(im);
             free(url);
             break;
