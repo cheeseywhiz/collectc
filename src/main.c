@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
         };
     };
 
+    free(urls);
     ju_free(json);
     free_response(re);
     return 0;
