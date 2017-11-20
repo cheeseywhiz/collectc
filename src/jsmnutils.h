@@ -10,8 +10,8 @@ typedef struct {
 } ju_json_t;
 
 enum key_error {
-    E_NOT_OBJECT = -1,
-    E_NO_MATCH = -2
+    JU_ETYPE = -1,
+    JU_ENO_MATCH = -2
 };
 
 ju_json_t* ju_parse(char*);
@@ -26,10 +26,10 @@ struct ju_array_iter {
     int index;
 };
 
-struct ju_array_iter ju_init_array_iter(ju_json_t*, int);
+struct ju_array_iter* ju_init_array_iter(ju_json_t*, int);
 int ju_array_next(struct ju_array_iter*);
 
-struct ju_array_iter ju_init_url_iter(ju_json_t*);
+struct ju_array_iter* ju_init_url_iter(ju_json_t*);
 char* ju_next_url(struct ju_array_iter*);
 
 #endif

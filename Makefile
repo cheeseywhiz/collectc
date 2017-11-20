@@ -10,8 +10,8 @@ CFLAGS+=-Wall -fPIC
 all: clean build_dirs collect
 
 clean:
-	@rm -rf build
-	@cd $(LIB)/jsmn && make clean
+	rm -rf build
+	@cd $(LIB)/jsmn && $(MAKE) clean
 
 build_dirs:
 	@mkdir -p $(BUILD)
@@ -42,4 +42,4 @@ setup_test: clean build_dirs
 
 test: setup_test src/get src/reg src/jsmnutils
 	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/$@.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
-	valgrind $(BUILD)/$@
+	valgrind $(VALGRIND) $(BUILD)/$@
