@@ -26,7 +26,7 @@ struct ju_array_iter {
     int index;
 };
 
-struct ju_array_iter ju_init_array_iter(ju_json_t*, int);
+struct ju_array_iter* ju_init_array_iter(ju_json_t*, int);
 int ju_array_next(struct ju_array_iter*);
 
 struct ju_array_iter ju_init_url_iter(ju_json_t*);
