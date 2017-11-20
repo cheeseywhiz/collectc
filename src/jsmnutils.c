@@ -1,47 +1,77 @@
+#include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-#define JSMN_PARENT_LINKS
 #include "jsmn.h"
 #include "jsmnutils.h"
 #include "reg.h"
 
-#define MAX_TOKENS 32768
+#define JU_MAX_TOKENS 32768
 
-void ju_parse(ju_json_t *self, char *json_str) {
+ju_json_t* ju_parse(char *json_str) {
+    size_t self_size = sizeof(ju_json_t);
+    ju_json_t *self = malloc(self_size);
+
+    if (self) {
+        bzero(self, self_size);
+    } else {
+        return NULL;
+    };
+
     jsmn_parser parser;
     jsmn_init(&parser);
 
-    int n_tokens = jsmn_parse(&parser, json_str, strlen(json_str), NULL, 0);
-
-    if (n_tokens < 0) {
-        n_tokens = MAX_TOKENS;
-    };
-
-    jsmn_init(&parser);
-    jsmntok_t tokens[n_tokens];
-    n_tokens = jsmn_parse(&parser, json_str, strlen(json_str), tokens, n_tokens);
-
-    if (n_tokens < 0) {
-        n_tokens = MAX_TOKENS;
-    };
-
     self->json_str = json_str;
-    self->tokens = tokens;
-    self->n_tokens = n_tokens;
+    self->n_tokens = jsmn_parse(&parser, json_str, strlen(json_str), NULL, 0);
+
+    if (0 > self->n_tokens) {
+        free(self);
+        return NULL;
+    };
+
+    size_t tokens_size = self->n_tokens * sizeof(jsmntok_t);
+    jsmn_init(&parser);
+    jsmntok_t *tokens = malloc(tokens_size);
+
+    if (tokens) {
+        bzero(tokens, tokens_size);
+        self->tokens = tokens;
+    } else {
+        free(self);
+        return NULL;
+    };
+
+    if (0 > jsmn_parse(&parser, json_str, strlen(json_str), tokens, self->n_tokens)) {
+        free(self);
+        free(self->tokens);
+        return NULL;
+    } else {
+        return self;
+    };
 };
 
-int ju_key_search(ju_json_t *self, int object, char *key) {
+void ju_free(ju_json_t *self) {
+    free(self->tokens);
+    free(self);
+};
+
+int ju_object_get(ju_json_t *self, int object, char *key) {
     if (self->tokens[object].type != JSMN_OBJECT) {
         return E_NOT_OBJECT;
     };
 
-    for (int i = object; i < self->n_tokens; i++) {
-        int start = self->tokens[i].start;
-        int end = self->tokens[i].end;
-        int length = end - start;
-        char *token = self->json_str + start;
+    for (int i = 0; i < self->n_tokens; i++) {
+        jsmntok_t token = self->tokens[i];
+        char *tok_str = regex_str_slice(self->json_str, token.start, token.end);
 
-        if (self->tokens[i].parent == object && length == strlen(key) && regex_starts_with(token, key)) {
+        if (!tok_str) {
+            continue;
+        };
+
+        int str_eq = (strcmp(tok_str, key) == 0);
+        free(tok_str);
+
+        if (token.parent == object && str_eq) {
             i++;
             return i;
         };
@@ -75,3 +105,22 @@ int ju_array_next(struct ju_array_iter *self) {
     return -1;
 };
 
+struct ju_array_iter ju_init_url_iter(ju_json_t *self) {
+    int data_obj_i = ju_object_get(self, 0, "data");
+    int posts_arr_i = ju_object_get(self, data_obj_i, "children");
+    return ju_init_array_iter(self, posts_arr_i);
+};
+
+char* ju_next_url(struct ju_array_iter *self) {
+    int i = ju_array_next(self);
+
+    if (i < 0) {
+        return NULL;
+    };
+
+    int sub_data_i = ju_object_get(self->json, i, "data");
+    int url_i = ju_object_get(self->json, sub_data_i, "url");
+    int start = self->json->tokens[url_i].start;
+    int end = self->json->tokens[url_i].end;
+    return regex_str_slice(self->json->json_str, start, end);
+};

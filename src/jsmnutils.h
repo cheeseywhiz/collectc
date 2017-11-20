@@ -1,6 +1,8 @@
 #ifndef JSON_H
 #define JSON_H
 
+#include "jsmn.h"
+
 typedef struct {
     char *json_str;
     jsmntok_t *tokens;
@@ -12,8 +14,10 @@ enum key_error {
     E_NO_MATCH = -2
 };
 
-void ju_parse(ju_json_t*, char*);
-int ju_key_search(ju_json_t*, int, char*);
+ju_json_t* ju_parse(char*);
+void ju_free(ju_json_t*);
+
+int ju_object_get(ju_json_t*, int, char*);
 
 struct ju_array_iter {
     ju_json_t *json;
@@ -24,5 +28,8 @@ struct ju_array_iter {
 
 struct ju_array_iter ju_init_array_iter(ju_json_t*, int);
 int ju_array_next(struct ju_array_iter*);
+
+struct ju_array_iter ju_init_url_iter(ju_json_t*);
+char* ju_next_url(struct ju_array_iter*);
 
 #endif
