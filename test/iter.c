@@ -41,10 +41,18 @@ int iter(void) {
     int posts = ju_object_get(json, data, "children");
     printf("posts = %d;\n", posts);
 
-    struct ju_array_iter iter = ju_init_array_iter(json, posts);
+    struct ju_array_iter *iter = ju_init_array_iter(json, posts);
+    
+    if (!iter) {
+        fprintf(stderr, "ju_init_array_iter failed\n");
+        free(iter);
+        free_response(response);
+        return 1;
+    };
+    
     int i;
 
-    for (i = ju_array_next(&iter); i > 0; i = ju_array_next(&iter)) {
+    for (i = ju_array_next(iter); i > 0; i = ju_array_next(iter)) {
         printf("t#%d\n", i);
         printf("p#%d\n\n", json->tokens[i].parent);
     };
