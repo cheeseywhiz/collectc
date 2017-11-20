@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
 
     if (!json) {
         fprintf(stderr, "ju_parse failed\n");
-        ju_free(json);
         free_response(re);
         return 1;
     };
@@ -26,7 +25,6 @@ int main(int argc, char **argv) {
     
     if (!urls) {
         fprintf(stderr, "ju_init_url_iter failed\n");
-        free(urls);
         ju_free(json);
         free_response(re);
         return 1;

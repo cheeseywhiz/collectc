@@ -61,6 +61,14 @@ int iter(void) {
     free(iter);
 
     struct ju_array_iter *urls = ju_init_url_iter(json);
+
+    if (!urls) {
+        fprintf(stderr, "ju_init_url_iter failed\n");
+        ju_free(json);
+        free_response(re);
+        return 1;
+    };
+
     char *url;
 
     for (url = ju_next_url(urls); url; url = ju_next_url(urls)) {
