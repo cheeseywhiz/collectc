@@ -41,12 +41,11 @@ ju_json_t* ju_parse(char *json_str) {
         return NULL;
     };
 
-    if (0 > jsmn_parse(&parser, json_str, strlen(json_str), tokens, self->n_tokens)) {
-        free(self);
-        free(self->tokens);
-        return NULL;
-    } else {
+    if (0 < jsmn_parse(&parser, json_str, strlen(json_str), tokens, self->n_tokens)) {
         return self;
+    } else {
+        ju_free(self);  /* self->tokens and self */
+        return NULL;
     };
 };
 
@@ -56,11 +55,10 @@ void ju_free(ju_json_t *self) {
 };
 
 int ju_object_get(ju_json_t *self, int object, char *key) {
-    if (self->tokens[object].type != JSMN_OBJECT) {
-        return E_NOT_OBJECT;
-    };
-
-    for (int i = 0; i < self->n_tokens; i++) {
+    struct ju_array_iter iter = ju_init_array_iter(self, object);
+    int i;
+    
+    for (i = ju_array_next(&iter); i > 0; i = ju_array_next(&iter)) {
         jsmntok_t token = self->tokens[i];
         char *tok_str = regex_str_slice(self->json_str, token.start, token.end);
 
@@ -71,7 +69,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
         int str_eq = (strcmp(tok_str, key) == 0);
         free(tok_str);
 
-        if (token.parent == object && str_eq) {
+        if (str_eq) {
             i++;
             return i;
         };
