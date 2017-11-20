@@ -10,8 +10,8 @@ typedef struct {
 } ju_json_t;
 
 enum key_error {
-    E_NOT_OBJECT = -1,
-    E_NO_MATCH = -2
+    JU_ETYPE = -1,
+    JU_ENO_MATCH = -2
 };
 
 ju_json_t* ju_parse(char*);
