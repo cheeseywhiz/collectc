@@ -39,14 +39,15 @@ int iter(void) {
 
     int data = ju_object_get(json, 0, "data");
     int posts = ju_object_get(json, data, "children");
+    printf("data = %d;\n", data);
     printf("posts = %d;\n", posts);
 
     struct ju_array_iter *iter = ju_init_array_iter(json, posts);
     
     if (!iter) {
         fprintf(stderr, "ju_init_array_iter failed\n");
-        free(iter);
-        free_response(response);
+        ju_free(json);
+        free_response(re);
         return 1;
     };
     
@@ -57,14 +58,17 @@ int iter(void) {
         printf("p#%d\n\n", json->tokens[i].parent);
     };
 
-    struct ju_array_iter urls = ju_init_url_iter(json);
+    free(iter);
+
+    struct ju_array_iter *urls = ju_init_url_iter(json);
     char *url;
 
-    for (url = ju_next_url(&urls); url; url = ju_next_url(&urls)) {
+    for (url = ju_next_url(urls); url; url = ju_next_url(urls)) {
         printf("%s\n", url);
         free(url);
     };
 
+    free(urls);
     ju_free(json);
     free_response(re);
     return 0;

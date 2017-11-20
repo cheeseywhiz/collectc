@@ -80,7 +80,7 @@ struct response* get_response(char *url) {
     };
 
     char *ua_prefix = "collect/";
-    char user_agent[strlen(ua_prefix) + strlen(VERSION)];
+    char user_agent[strlen(ua_prefix) + strlen(VERSION) + 1];
     strcpy(user_agent, ua_prefix);
     strcat(user_agent, VERSION);
 

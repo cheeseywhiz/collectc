@@ -29,7 +29,7 @@ struct ju_array_iter {
 struct ju_array_iter* ju_init_array_iter(ju_json_t*, int);
 int ju_array_next(struct ju_array_iter*);
 
-struct ju_array_iter ju_init_url_iter(ju_json_t*);
+struct ju_array_iter* ju_init_url_iter(ju_json_t*);
 char* ju_next_url(struct ju_array_iter*);
 
 #endif

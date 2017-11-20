@@ -75,22 +75,24 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
         free(tok_str);
 
         if (str_eq) {
+            free(iter);
             i++;
             return i;
         };
     };
 
+    free(iter);
     return JU_ENO_MATCH;
 };
 
 struct ju_array_iter* ju_init_array_iter(ju_json_t *self, int array_i) {
-    tok_type = self->tokens[array_i].parent
+    int tok_type = self->tokens[array_i].type;
 
-    if (parent != JSMN_ARRAY || parent != JSMN_OBJECT) {
+    if (tok_type != JSMN_ARRAY && tok_type != JSMN_OBJECT) {
         return NULL;
     };
     
-    size_t iter_size = sizeof(struct ju_array_iter));
+    size_t iter_size = sizeof(struct ju_array_iter);
     struct ju_array_iter *iter = malloc(iter_size);
     
     if (iter) {
@@ -109,7 +111,7 @@ struct ju_array_iter* ju_init_array_iter(ju_json_t *self, int array_i) {
 int ju_array_next(struct ju_array_iter *self) {
     self->n_items++;
 
-    if (!(self->n_items <= self->json->tokens[self->array_i].size)) {
+    if (self->n_items > self->json->tokens[self->array_i].size) {
         return -1;
     };
 
@@ -122,7 +124,7 @@ int ju_array_next(struct ju_array_iter *self) {
     return -1;
 };
 
-struct ju_array_iter ju_init_url_iter(ju_json_t *self) {
+struct ju_array_iter* ju_init_url_iter(ju_json_t *self) {
     int data_obj_i = ju_object_get(self, 0, "data");
     int posts_arr_i = ju_object_get(self, data_obj_i, "children");
     return ju_init_array_iter(self, posts_arr_i);
