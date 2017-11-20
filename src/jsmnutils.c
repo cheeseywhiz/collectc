@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -55,10 +56,15 @@ void ju_free(ju_json_t *self) {
 };
 
 int ju_object_get(ju_json_t *self, int object, char *key) {
-    struct ju_array_iter iter = ju_init_array_iter(self, object);
+    struct ju_array_iter *iter = ju_init_array_iter(self, object);
+    
+    if (!iter) {
+        return JU_ETYPE;
+    };
+    
     int i;
     
-    for (i = ju_array_next(&iter); i > 0; i = ju_array_next(&iter)) {
+    for (i = ju_array_next(iter); i > 0; i = ju_array_next(iter)) {
         jsmntok_t token = self->tokens[i];
         char *tok_str = regex_str_slice(self->json_str, token.start, token.end);
 
@@ -75,15 +81,29 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
         };
     };
 
-    return E_NO_MATCH;
+    return JU_ENO_MATCH;
 };
 
-struct ju_array_iter ju_init_array_iter(ju_json_t *self, int array_i) {
-    struct ju_array_iter iter;
-    iter.json = self;
-    iter.n_items = 0;
-    iter.index = array_i;
-    iter.array_i = array_i;
+struct ju_array_iter* ju_init_array_iter(ju_json_t *self, int array_i) {
+    tok_type = self->tokens[array_i].parent
+
+    if (parent != JSMN_ARRAY || parent != JSMN_OBJECT) {
+        return NULL;
+    };
+    
+    size_t iter_size = sizeof(struct ju_array_iter));
+    struct ju_array_iter *iter = malloc(iter_size);
+    
+    if (iter) {
+        bzero(iter, iter_size);
+    } else {
+        return NULL;
+    };
+
+    iter->json = self;
+    iter->n_items = 0;
+    iter->index = array_i;
+    iter->array_i = array_i;
     return iter;
 };
 
