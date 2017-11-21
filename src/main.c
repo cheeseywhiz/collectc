@@ -6,7 +6,8 @@
 #include "reg.h"
 #include "jsmnutils.h"
 
-int main(int argc, char **argv) {
+// int main(int argc, char **argv) {
+int main(void) {
     struct response *re = get_response("https://www.reddit.com/r/EarthPorn/hot/.json?limit=10");
 
     if (!re) {
@@ -56,4 +57,4 @@ int main(int argc, char **argv) {
     ju_free(json);
     free_response(re);
     return 0;
-};
+}

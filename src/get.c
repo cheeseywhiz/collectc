@@ -8,11 +8,13 @@
 #include "get.h"
 #include "reg.h"
 
+#define UA_PREFIX "collect/"
+
 void free_response(struct response *self) {
     free(self->type);
     free(self->content);
     free(self);
-};
+}
 
 typedef struct {
     char *content;
@@ -23,27 +25,19 @@ static buffer_t* new_buffer(void) {
     buffer_t *self = malloc(sizeof(buffer_t));
 
     if (!self) {
-        fprintf(stderr, "malloc buffer_t\n");
+        fprintf(stderr, "buffer_t *self calloc\n");
         return NULL;
     };
 
-    self->content = malloc(1);
-
-    if (self->content) {
-        *self->content = 0;
-    } else {
-        fprintf(stderr, "malloc buffer_t->content\n");
-        return NULL;
-    };
-
+    self->content = calloc(1, 1);
     self->length = 0;
     return self;
-};
+}
 
 static void free_buffer(buffer_t *self) {
     free(self->content);
     free(self);
-};
+}
 
 static size_t append_buffer(char *buffer, size_t len, size_t n_items, buffer_t *self) {
     size_t n_chars = len * n_items;
@@ -58,7 +52,7 @@ static size_t append_buffer(char *buffer, size_t len, size_t n_items, buffer_t *
         return 0;
     };
 
-};
+}
 
 struct response* get_response(char *url) {
     struct response *re = malloc(sizeof(struct response));
@@ -79,9 +73,8 @@ struct response* get_response(char *url) {
         return NULL;
     };
 
-    char *ua_prefix = "collect/";
-    char user_agent[strlen(ua_prefix) + strlen(VERSION) + 1];
-    strcpy(user_agent, ua_prefix);
+    char user_agent[strlen(UA_PREFIX) + strlen(VERSION) + 1];
+    strcpy(user_agent, UA_PREFIX);
     strcat(user_agent, VERSION);
 
     curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
@@ -103,14 +96,14 @@ struct response* get_response(char *url) {
         return NULL;
     };
 
-    re->content = malloc(ct_buf->length + 3);
+    re->content = calloc(ct_buf->length + 3, 1);
     strcpy(re->content, ct_buf->content);
 
     re->length = ct_buf->length;
 
     char *pattern = "content-type:[ ]*([^\r\n]*)";
     char *match = regex_match_one_subexpr(pattern, hd_buf->content, REG_EXTENDED | REG_ICASE);
-    re->type = malloc(strlen(match) + 3);
+    re->type = calloc(strlen(match) + 3, 1);
     strcpy(re->type, match);
 
     free(match);
@@ -120,4 +113,4 @@ struct response* get_response(char *url) {
     curl_easy_cleanup(curl);
     curl_global_cleanup();
     return re;
-};
+}

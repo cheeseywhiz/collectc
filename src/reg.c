@@ -21,19 +21,18 @@ char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     };
 
 fail:
-    needle = malloc(1);
-    strcpy(needle, "");
+    needle = calloc(1, 1);
 
 cleanup:
     regfree(&reg);
     return needle;
-};
+}
 
 int regex_starts_with(char *haystack, char *needle) {
     size_t ned_len = strlen(needle);
     size_t hay_len = strlen(haystack);
 
-    for (int i = 0; ; i++) {
+    for (size_t i = 0; ; i++) {
         if (i == ned_len) {
             break;
         } else if ((i == hay_len) || (i > ned_len) || (i > hay_len) || (*(haystack + i) != *(needle + i))) {
@@ -42,26 +41,23 @@ int regex_starts_with(char *haystack, char *needle) {
     };
 
     return 1;
-};
+}
 
 char* regex_str_slice(char *src, int start, int end) {
     int dest_length = end - start;
     int src_length = strlen(src);
 
     if (dest_length > 0 && 0 <= start && start < src_length && 0 < end && end <= src_length) {
-        char *dest = malloc(dest_length + 1);
+        char *dest = calloc(dest_length + 1, 1);
 
         if (!dest) {
             return NULL;
         };
 
-        bzero(dest, dest_length + 1);
         return strncpy(dest, src + start, dest_length);
     } else if (dest_length == 0) {
-        char *dest = malloc(1);
-        *dest = 0;
-        return dest;
+        return calloc(1, 1);
     };
 
     return NULL;
-};
+}

@@ -6,4 +6,4 @@ int main(void) {
     EXIT(iter())
 
     return 0;
-};
+}

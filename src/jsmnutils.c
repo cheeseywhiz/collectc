@@ -12,9 +12,7 @@ ju_json_t* ju_parse(char *json_str) {
     size_t self_size = sizeof(ju_json_t);
     ju_json_t *self = malloc(self_size);
 
-    if (self) {
-        bzero(self, self_size);
-    } else {
+    if (!self) {
         return NULL;
     };
 
@@ -29,30 +27,28 @@ ju_json_t* ju_parse(char *json_str) {
         return NULL;
     };
 
-    size_t tokens_size = self->n_tokens * sizeof(jsmntok_t);
     jsmn_init(&parser);
-    jsmntok_t *tokens = malloc(tokens_size);
+    jsmntok_t *tokens = calloc(self->n_tokens, sizeof(jsmntok_t));
 
     if (tokens) {
-        bzero(tokens, tokens_size);
         self->tokens = tokens;
     } else {
         free(self);
         return NULL;
     };
 
-    if (0 < jsmn_parse(&parser, json_str, strlen(json_str), tokens, self->n_tokens)) {
+    if (0 < jsmn_parse(&parser, self->json_str, strlen(json_str), self->tokens, self->n_tokens)) {
         return self;
     } else {
         ju_free(self);  /* self->tokens and self */
         return NULL;
     };
-};
+}
 
 void ju_free(ju_json_t *self) {
     free(self->tokens);
     free(self);
-};
+}
 
 int ju_object_get(ju_json_t *self, int object, char *key) {
     struct ju_array_iter *iter = ju_init_array_iter(self, object);
@@ -83,7 +79,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
 
     free(iter);
     return JU_ENO_MATCH;
-};
+}
 
 struct ju_array_iter* ju_init_array_iter(ju_json_t *self, int array_i) {
     int tok_type = self->tokens[array_i].type;
@@ -91,13 +87,10 @@ struct ju_array_iter* ju_init_array_iter(ju_json_t *self, int array_i) {
     if (tok_type != JSMN_ARRAY && tok_type != JSMN_OBJECT) {
         return NULL;
     };
+
+    struct ju_array_iter *iter = malloc(sizeof(struct ju_array_iter));
     
-    size_t iter_size = sizeof(struct ju_array_iter);
-    struct ju_array_iter *iter = malloc(iter_size);
-    
-    if (iter) {
-        bzero(iter, iter_size);
-    } else {
+    if (!iter) {
         return NULL;
     };
 
@@ -106,7 +99,7 @@ struct ju_array_iter* ju_init_array_iter(ju_json_t *self, int array_i) {
     iter->index = array_i;
     iter->array_i = array_i;
     return iter;
-};
+}
 
 int ju_array_next(struct ju_array_iter *self) {
     self->n_items++;
@@ -122,13 +115,13 @@ int ju_array_next(struct ju_array_iter *self) {
     };
 
     return -1;
-};
+}
 
 struct ju_array_iter* ju_init_url_iter(ju_json_t *self) {
     int data_obj_i = ju_object_get(self, 0, "data");
     int posts_arr_i = ju_object_get(self, data_obj_i, "children");
     return ju_init_array_iter(self, posts_arr_i);
-};
+}
 
 char* ju_next_url(struct ju_array_iter *self) {
     int i = ju_array_next(self);
@@ -142,4 +135,4 @@ char* ju_next_url(struct ju_array_iter *self) {
     int start = self->json->tokens[url_i].start;
     int end = self->json->tokens[url_i].end;
     return regex_str_slice(self->json->json_str, start, end);
-};
+}

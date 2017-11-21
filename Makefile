@@ -4,8 +4,7 @@ TEST=$(PWD)/test
 BUILD=$(PWD)/build
 OBJ=$(BUILD)/obj
 
-CC=gcc
-CFLAGS+=-Wall -fPIC
+CFLAGS+=-Wall -Wextra -pedantic-errors -O2 -fPIC -fverbose-asm -masm=intel -march=native
 
 all: clean build_dirs collect
 
@@ -19,7 +18,7 @@ build_dirs:
 
 jsmn:
 	$(eval CFLAGS+=-DJSMN_PARENT_LINKS)
-	@cd $(LIB)/$@ && CFLAGS="${CFLAGS}" make
+	@cd $(LIB)/$@ && CFLAGS="-DJSMN_PARENT_LINKS" $(MAKE)
 	$(eval CFLAGS+=-I$(LIB)/$@)
 	$(eval LDFLAGS+=-L$(LIB)/$@)
 	$(eval LDLIBS+=-ljsmn)
@@ -38,6 +37,7 @@ collect: src/get src/jsmnutils src/reg
 	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
 
 setup_test: clean build_dirs
+	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
 
 test: setup_test src/get src/reg src/jsmnutils
