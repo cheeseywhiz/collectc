@@ -71,7 +71,9 @@ int iter(void) {
     char *url;
 
     for (url = ju_next_url(urls); url; url = ju_next_url(urls)) {
-        printf("%s\n", url);
+        char *path = regex_url_fname(url);
+        printf("%s -> %s\n", url, path);
+        free(path);
         free(url);
     };
 

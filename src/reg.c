@@ -60,3 +60,21 @@ char* regex_str_slice(char *src, int start, int end) {
 
     return NULL;
 }
+
+char* regex_url_fname(char *url) {
+    int n_matches = 6;
+    regex_t reg;
+    regmatch_t pmatch[n_matches];
+    char *pattern = "^((http[s]?|ftp)://)?([^/]*)(/([^/?#]*))*";
+    regcomp(&reg, pattern, REG_EXTENDED);
+    char *fname;
+
+    if (regexec(&reg, url, n_matches, pmatch, 0) != 0) {
+        fname = calloc(1, 1);
+    } else {
+        fname = regex_str_slice(url, pmatch[5].rm_so, pmatch[5].rm_eo);
+    };
+
+    regfree(&reg);
+    return fname;
+}

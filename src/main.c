@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
     };
     
     char *url;
+    int break_ = 0;
 
     int flags = O_CREAT | O_WRONLY | O_TRUNC;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
@@ -48,19 +49,20 @@ int main(int argc, char **argv) {
         struct response *im = get_response(url);
 
         if (regex_starts_with(im->type, "image")) {
-            fprintf(stdout, "%s\n", "image.jpg");
+            char *path = regex_url_fname(url);
+            printf("%s\n", path);
 
-            int im_fd = open("image.jpg", flags, mode);
+            int im_fd = open(path, flags, mode);
             write(im_fd, im->content, im->length);
             close(im_fd);
 
-            free_response(im);
-            free(url);
-            break;
+            free(path);
+            break_ = 1;
         };
 
         free_response(im);
         free(url);
+        if (break_) break;
     };
 
     free(urls);
