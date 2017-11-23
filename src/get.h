@@ -1,6 +1,8 @@
 #ifndef GET_H
 #define GET_H
 
+#include <stdlib.h>
+
 struct response {
     char *type;
     char *content;

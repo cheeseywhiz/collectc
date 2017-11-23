@@ -2,7 +2,6 @@
  *  Test various ways of iterating through a parsed json set
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 
 #include "get.h"

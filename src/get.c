@@ -1,18 +1,20 @@
 #include <curl/curl.h>
 #include <regex.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "config.h"
 #include "get.h"
 #include "reg.h"
 
-#define UA_PREFIX "collect/"
+#define UA_PREFIX "collectc/"
 
 void free_response(struct response *self) {
     free(self->type);
-    free(self->content);
+
+    if (self->content) {
+        free(self->content);
+    };
+
     free(self);
 }
 
@@ -29,39 +31,30 @@ static buffer_t* new_buffer(void) {
         return NULL;
     };
 
-    self->content = calloc(1, 1);
+    self->content = NULL;
     self->length = 0;
     return self;
 }
 
-static void free_buffer(buffer_t *self) {
-    free(self->content);
-    free(self);
-}
+static size_t append_buffer(char *buffer, size_t size, size_t n_items, buffer_t *self) {
+    size_t buffer_len = size * n_items;
+    char *ptr = realloc(self->content, self->length + buffer_len + 1);
 
-static size_t append_buffer(char *buffer, size_t len, size_t n_items, buffer_t *self) {
-    size_t n_chars = len * n_items;
-    char *p = realloc(self->content, self->length + n_chars + 3);
-
-    if (p) {
-        self->content = p;
-        strcat(self->content, buffer);
-        self->length += n_chars;
-        return n_chars;
+    if (ptr) {
+        self->content = ptr;
     } else {
         return 0;
     };
 
+    memcpy(self->content + self->length, buffer, buffer_len);
+    self->length += buffer_len;
+    self->content[self->length] = '\0';
+
+    return buffer_len;
 }
 
 struct response* get_response(char *url) {
-    struct response *re = malloc(sizeof(struct response));
-
-    if (!re) {
-        fprintf(stderr, "malloc struct response*\n");
-        return NULL;
-    };
-
+    int exit = 0;
     CURLcode res = 0;
     CURL *curl;
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -69,22 +62,35 @@ struct response* get_response(char *url) {
 
     if (!curl) {
         fprintf(stderr, "curl init failed\n");
-        free_response(re);
-        return NULL;
+        exit = 1;
+        goto cleanup1;
+    } else {
+        char user_agent[strlen(UA_PREFIX) + strlen(VERSION) + 1];
+        strcpy(user_agent, UA_PREFIX);
+        strcat(user_agent, VERSION);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
     };
 
-    char user_agent[strlen(UA_PREFIX) + strlen(VERSION) + 1];
-    strcpy(user_agent, UA_PREFIX);
-    strcat(user_agent, VERSION);
-
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
     curl_easy_setopt(curl, CURLOPT_URL, url);
 
     buffer_t *hd_buf = new_buffer();
+
+    if (!hd_buf) {
+        exit = 1;
+        goto cleanup1;
+    };
+
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, append_buffer);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, hd_buf);
     
     buffer_t *ct_buf = new_buffer();
+
+    if (!ct_buf) {
+        exit = 1;
+        free(hd_buf);
+        goto cleanup1;
+    };
+
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, append_buffer);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, ct_buf);
 
@@ -92,25 +98,50 @@ struct response* get_response(char *url) {
 
     if (res != CURLE_OK) {
         fprintf(stderr, "curl_easy_perform failed (%s)\n", curl_easy_strerror(res));
-        free_response(re);
-        return NULL;
+        exit = 1;
+        goto cleanup2;
     };
 
-    re->content = calloc(ct_buf->length + 3, 1);
-    strcpy(re->content, ct_buf->content);
+    struct response *re = malloc(sizeof(struct response));
 
-    re->length = ct_buf->length;
+    if (!re) {
+        fprintf(stderr, "malloc struct response*\n");
+        exit = 1;
+        goto cleanup2;
+    };
 
     char *pattern = "content-type:[ ]*([^\r\n]*)";
     char *match = regex_match_one_subexpr(pattern, hd_buf->content, REG_EXTENDED | REG_ICASE);
-    re->type = calloc(strlen(match) + 3, 1);
-    strcpy(re->type, match);
 
-    free(match);
-    free_buffer(hd_buf);
-    free_buffer(ct_buf);
+    if (!match) {
+        match = calloc(1, 1);
 
+        if (!match) {
+            exit = 1;
+            free(re);
+            goto cleanup2;
+        };
+    };
+
+    re->type = match;
+    re->content = ct_buf->content;
+    re->length = ct_buf->length;
+
+    if (hd_buf->content) {
+        free(hd_buf->content);
+    };
+
+cleanup2:
+    free(hd_buf);
+    free(ct_buf);
+
+cleanup1:
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-    return re;
+
+    if (!exit) {
+        return re;
+    } else {
+        return NULL;
+    };
 }

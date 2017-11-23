@@ -3,15 +3,22 @@ import sys
 import requests
 
 
+def get(url):
+    return requests.get(url, headers={'user-agent': 'collectc/0.0'})
+
+
 def main():
-    for post in requests.get(
-        sys.argv[1], headers={'user-agent': 'collectc/0.0'}
-    ).json()['data']['children']:
+    if len(sys.argv) < 2:
+        reddit_url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10"
+    else:
+        reddit_url = sys.argv[1]
+
+    for post in get(reddit_url).json()['data']['children']:
         url = post['data']['url']
-        req = requests.get(
-            url, headers={'user-agent': 'collectc/0.0'}
-        )
+        req = get(url)
         if req.headers['content-type'].startswith('image'):
+            print('image')
+
             with open('image', 'wb') as file:
                 file.write(req.content)
 

@@ -1,14 +1,21 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include "get.h"
 #include "reg.h"
 #include "jsmnutils.h"
 
-// int main(int argc, char **argv) {
-int main(void) {
-    struct response *re = get_response("https://www.reddit.com/r/EarthPorn/hot/.json?limit=10");
+int main(int argc, char **argv) {
+    char *reddit_url;
+
+    if (argc < 2) {
+        reddit_url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
+    } else {
+        reddit_url = argv[1];
+    };
+
+    struct response *re = get_response(reddit_url);
 
     if (!re) {
         fprintf(stderr, "get_response failed\n");
@@ -34,23 +41,26 @@ int main(void) {
     
     char *url;
 
+    int flags = O_CREAT | O_WRONLY | O_TRUNC;
+    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
     for (url = ju_next_url(urls); url; url = ju_next_url(urls)) {
         struct response *im = get_response(url);
-        if (regex_starts_with(im->type, "image")) {
-            fprintf(stderr, "%s\n", url);
 
-            FILE *im_file = fopen("a.jpg", "w");
-            int *ptr = (int *)im->content;
-            fwrite(ptr, sizeof(ptr[0]), sizeof(ptr)/sizeof(ptr[0]), im_file);
-            fclose(im_file);
+        if (regex_starts_with(im->type, "image")) {
+            fprintf(stdout, "%s\n", "image.jpg");
+
+            int im_fd = open("image.jpg", flags, mode);
+            write(im_fd, im->content, im->length);
+            close(im_fd);
 
             free_response(im);
             free(url);
             break;
-        } else {
-            free_response(im);
-            free(url);
         };
+
+        free_response(im);
+        free(url);
     };
 
     free(urls);

@@ -1,6 +1,9 @@
+#include "get.h"
+
 #include "iter.c"
 
-#define EXIT(x) if(x) return x;
+int exit_code;
+#define EXIT(x) exit_code = x; if(exit_code) return exit_code;
 
 int main(void) {
     EXIT(iter())

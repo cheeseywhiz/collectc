@@ -1,12 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "jsmn.h"
 #include "jsmnutils.h"
 #include "reg.h"
-
-#define JU_MAX_TOKENS 32768
 
 ju_json_t* ju_parse(char *json_str) {
     size_t self_size = sizeof(ju_json_t);
@@ -120,6 +117,11 @@ int ju_array_next(struct ju_array_iter *self) {
 struct ju_array_iter* ju_init_url_iter(ju_json_t *self) {
     int data_obj_i = ju_object_get(self, 0, "data");
     int posts_arr_i = ju_object_get(self, data_obj_i, "children");
+
+    if (posts_arr_i < 1) {
+        return NULL;
+    };
+
     return ju_init_array_iter(self, posts_arr_i);
 }
 
@@ -132,6 +134,11 @@ char* ju_next_url(struct ju_array_iter *self) {
 
     int sub_data_i = ju_object_get(self->json, i, "data");
     int url_i = ju_object_get(self->json, sub_data_i, "url");
+
+    if (url_i < 0) {
+        return NULL;
+    };
+
     int start = self->json->tokens[url_i].start;
     int end = self->json->tokens[url_i].end;
     return regex_str_slice(self->json->json_str, start, end);
