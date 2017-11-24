@@ -31,7 +31,9 @@ src/%:
 src/get: jsmn src/reg
 src/get: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
 
-src/jsmnutils: jsmn src/reg
+src/rand: LDLIBS+=-lm
+
+src/jsmnutils: jsmn src/reg src/rand
 
 collect: src/get src/jsmnutils src/reg
 	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
@@ -40,6 +42,6 @@ setup_test: clean build_dirs
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
 
-test: setup_test src/get src/reg src/jsmnutils
+test: setup_test src/get src/reg src/jsmnutils src/rand
 	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/$@.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
 	valgrind $(VALGRIND) $(BUILD)/$@

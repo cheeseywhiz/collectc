@@ -41,10 +41,10 @@ int iter(void) {
     printf("data = %d;\n", data);
     printf("posts = %d;\n", posts);
 
-    struct ju_array_iter *iter = ju_init_array_iter(json, posts);
+    struct ju_array_iter *iter = ju_array_init(json, posts);
     
     if (!iter) {
-        fprintf(stderr, "ju_init_array_iter failed\n");
+        fprintf(stderr, "ju_array_init failed\n");
         ju_free(json);
         free_response(re);
         return 1;
@@ -59,10 +59,10 @@ int iter(void) {
 
     free(iter);
 
-    struct ju_array_iter *urls = ju_init_url_iter(json);
+    struct ju_array_iter *urls = ju_url_init(json);
 
     if (!urls) {
-        fprintf(stderr, "ju_init_url_iter failed\n");
+        fprintf(stderr, "ju_url_init failed\n");
         ju_free(json);
         free_response(re);
         return 1;
@@ -70,7 +70,7 @@ int iter(void) {
 
     char *url;
 
-    for (url = ju_next_url(urls); url; url = ju_next_url(urls)) {
+    for (url = ju_url_next(urls); url; url = ju_url_next(urls)) {
         char *path = regex_url_fname(url);
         printf("%s -> %s\n", url, path);
         free(path);
@@ -78,6 +78,18 @@ int iter(void) {
     };
 
     free(urls);
+    printf("\n");
+
+    struct ju_random_iter *random_url_iter = ju_random_url_init(json);
+
+    for (url = ju_random_url_next(random_url_iter); url; url = ju_random_url_next(random_url_iter)) {
+        char *path = regex_url_fname(url);
+        printf("%s -> %s\n", url, path);
+        free(path);
+        free(url);
+    };
+
+    ju_random_free(random_url_iter);
     ju_free(json);
     free_response(re);
     return 0;

@@ -30,10 +30,10 @@ int main(int argc, char **argv) {
         return 1;
     };
 
-    struct ju_array_iter *urls = ju_init_url_iter(json);
+    struct ju_random_iter *urls = ju_random_url_init(json);
     
     if (!urls) {
-        fprintf(stderr, "ju_init_url_iter failed\n");
+        fprintf(stderr, "ju_random_url_init failed\n");
         ju_free(json);
         free_response(re);
         return 1;
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     int flags = O_CREAT | O_WRONLY | O_TRUNC;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
-    for (url = ju_next_url(urls); url; url = ju_next_url(urls)) {
+    for (url = ju_random_url_next(urls); url; url = ju_random_url_next(urls)) {
         struct response *im = get_response(url);
 
         if (regex_starts_with(im->type, "image")) {
