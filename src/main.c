@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
         if (break_) break;
     }
 
-    free(urls);
+    ju_random_free(urls);
     ju_free(json);
     free_response(re);
     return 0;
