@@ -14,7 +14,7 @@ int iter(void) {
     if (!re) {
         fprintf(stderr, "get_response failed\n");
         return 1;
-    };
+    }
 
     ju_json_t *json = ju_parse(re->content);
 
@@ -22,7 +22,7 @@ int iter(void) {
         fprintf(stderr, "ju_parse failed\n");
         free_response(re);
         return 1;
-    };
+    }
 
     for (int i = 0; i < json->n_tokens; i++) {
         jsmntok_t token = json->tokens[i];
@@ -33,8 +33,8 @@ int iter(void) {
             free(tok_str);
         } else {
             printf("tok_str evaluated false\n");
-        };
-    };
+        }
+    }
 
     int data = ju_object_get(json, 0, "data");
     int posts = ju_object_get(json, data, "children");
@@ -48,14 +48,14 @@ int iter(void) {
         ju_free(json);
         free_response(re);
         return 1;
-    };
+    }
     
     int i;
 
     for (i = ju_array_next(iter); i > 0; i = ju_array_next(iter)) {
         printf("t#%d\n", i);
         printf("p#%d\n\n", json->tokens[i].parent);
-    };
+    }
 
     free(iter);
 
@@ -66,7 +66,7 @@ int iter(void) {
         ju_free(json);
         free_response(re);
         return 1;
-    };
+    }
 
     char *url;
 
@@ -75,7 +75,7 @@ int iter(void) {
         printf("%s -> %s\n", url, path);
         free(path);
         free(url);
-    };
+    }
 
     free(urls);
     printf("\n");
@@ -87,7 +87,7 @@ int iter(void) {
         printf("%s -> %s\n", url, path);
         free(path);
         free(url);
-    };
+    }
 
     ju_random_free(random_url_iter);
     ju_free(json);

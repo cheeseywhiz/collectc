@@ -10,7 +10,7 @@ ju_json_t* ju_parse(char *json_str) {
 
     if (!self) {
         return NULL;
-    };
+    }
 
     jsmn_parser parser;
     jsmn_init(&parser);
@@ -21,7 +21,7 @@ ju_json_t* ju_parse(char *json_str) {
     if (0 > self->n_tokens) {
         free(self);
         return NULL;
-    };
+    }
 
     jsmn_init(&parser);
     jsmntok_t *tokens = calloc(self->n_tokens, sizeof(jsmntok_t));
@@ -31,14 +31,14 @@ ju_json_t* ju_parse(char *json_str) {
     } else {
         free(self);
         return NULL;
-    };
+    }
 
     if (0 < jsmn_parse(&parser, self->json_str, strlen(json_str), self->tokens, self->n_tokens)) {
         return self;
     } else {
         ju_free(self);  /* self->tokens and self */
         return NULL;
-    };
+    }
 }
 
 void ju_free(ju_json_t *self) {
@@ -51,7 +51,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
     
     if (!iter) {
         return JU_ETYPE;
-    };
+    }
     
     int i;
     
@@ -61,7 +61,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
 
         if (!tok_str) {
             continue;
-        };
+        }
 
         int str_eq = (strcmp(tok_str, key) == 0);
         free(tok_str);
@@ -70,8 +70,8 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
             free(iter);
             i++;
             return i;
-        };
-    };
+        }
+    }
 
     free(iter);
     return JU_ENO_MATCH;
@@ -82,13 +82,13 @@ struct ju_array_iter* ju_array_init(ju_json_t *self, int array_i) {
 
     if (tok_type != JSMN_ARRAY && tok_type != JSMN_OBJECT) {
         return NULL;
-    };
+    }
 
     struct ju_array_iter *iter = malloc(sizeof(struct ju_array_iter));
     
     if (!iter) {
         return NULL;
-    };
+    }
 
     iter->json = self;
     iter->n_items = 0;
@@ -101,19 +101,19 @@ struct ju_array_iter* ju_array_init(ju_json_t *self, int array_i) {
 int ju_array_next(struct ju_array_iter *self) {
     if (self->n_items < 0) {
         return -1;
-    };
+    }
 
     self->n_items++;
 
     if (self->n_items > self->size) {
         return -1;
-    };
+    }
 
     for (self->index++; self->index < self->json->n_tokens; self->index++) {
         if (self->json->tokens[self->index].parent == self->array_i) {
             return self->index;
-        };
-    };
+        }
+    }
 
     return -1;
 }
@@ -124,7 +124,7 @@ struct ju_array_iter* ju_url_init(ju_json_t *self) {
 
     if (posts_arr_i < 1) {
         return NULL;
-    };
+    }
 
     return ju_array_init(self, posts_arr_i);
 }
@@ -132,14 +132,14 @@ struct ju_array_iter* ju_url_init(ju_json_t *self) {
 static char* ju_url_from_post_object(ju_json_t *json, int post_i) {
     if (post_i < 0) {
         return NULL;
-    };
+    }
 
     int sub_data_i = ju_object_get(json, post_i, "data");
     int url_i = ju_object_get(json, sub_data_i, "url");
 
     if (url_i < 0) {
         return NULL;
-    };
+    }
 
     int start = json->tokens[url_i].start;
     int end = json->tokens[url_i].end;
@@ -155,26 +155,26 @@ struct ju_random_iter* ju_random_init(ju_json_t *self, int array_i) {
 
     if (!iter) {
         return NULL;
-    };
+    }
 
     struct ju_array_iter *array_iter = ju_array_init(self, array_i);
 
     if (!array_iter) {
         return NULL;
-    };
+    }
 
     iter->list = malloc(sizeof(int) * array_iter->size);
 
     if (!iter->list) {
         return NULL;
-    };
+    }
 
     int json_i;
     int length = 0;
 
     for (json_i = ju_array_next(array_iter); json_i > 0; json_i = ju_array_next(array_iter)) {
         iter->list[length++] = json_i;
-    };
+    }
 
     iter->json = self;
     iter->indices = int_list_random_order(length);
@@ -196,7 +196,7 @@ int ju_random_next(struct ju_random_iter *self) {
 
     if (self->index >= self->indices->length) {
         return -1;
-    };
+    }
 
     return self->list[self->indices->items[self->index]];
 }
@@ -207,7 +207,7 @@ struct ju_random_iter* ju_random_url_init(ju_json_t *self) {
 
     if (posts_arr_i < 1) {
         return NULL;
-    };
+    }
 
     return ju_random_init(self, posts_arr_i);
 }

@@ -13,14 +13,14 @@ int main(int argc, char **argv) {
         reddit_url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
     } else {
         reddit_url = argv[1];
-    };
+    }
 
     struct response *re = get_response(reddit_url);
 
     if (!re) {
         fprintf(stderr, "get_response failed\n");
         return 1;
-    };
+    }
 
     ju_json_t *json = ju_parse(re->content);
 
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "ju_parse failed\n");
         free_response(re);
         return 1;
-    };
+    }
 
     struct ju_random_iter *urls = ju_random_url_init(json);
     
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         ju_free(json);
         free_response(re);
         return 1;
-    };
+    }
     
     char *url;
     int break_ = 0;
@@ -58,12 +58,12 @@ int main(int argc, char **argv) {
 
             free(path);
             break_ = 1;
-        };
+        }
 
         free_response(im);
         free(url);
         if (break_) break;
-    };
+    }
 
     free(urls);
     ju_free(json);

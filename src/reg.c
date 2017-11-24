@@ -17,7 +17,7 @@ char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
 
     if (needle) {
         goto cleanup;
-    };
+    }
 
 fail:
     needle = calloc(1, 1);
@@ -36,8 +36,8 @@ int regex_starts_with(char *haystack, char *needle) {
             break;
         } else if ((i == hay_len) || (i > ned_len) || (i > hay_len) || (*(haystack + i) != *(needle + i))) {
             return 0;
-        };
-    };
+        }
+    }
 
     return 1;
 }
@@ -51,12 +51,12 @@ char* regex_str_slice(char *src, int start, int end) {
 
         if (!dest) {
             return NULL;
-        };
+        }
 
         return strncpy(dest, src + start, dest_length);
     } else if (dest_length == 0) {
         return calloc(1, 1);
-    };
+    }
 
     return NULL;
 }
@@ -73,7 +73,7 @@ char* regex_url_fname(char *url) {
         fname = calloc(1, 1);
     } else {
         fname = regex_str_slice(url, pmatch[5].rm_so, pmatch[5].rm_eo);
-    };
+    }
 
     regfree(&reg);
     return fname;

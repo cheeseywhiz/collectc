@@ -18,8 +18,8 @@ static int int_list_contains(int_list *self, int num) {
     for (int i = 0; i < self->length; i++) {
         if (num == self->items[i]) {
             return 1;
-        };
-    };
+        }
+    }
 
     return 0;
 }
@@ -36,7 +36,7 @@ int_list* int_list_random_order(int max) {
     if (!self) {
         fprintf(stderr, "int_list_random_order self malloc failed\n");
         return NULL;
-    };
+    }
 
     self->items = NULL;
     self->length = 0;
@@ -50,10 +50,10 @@ int_list* int_list_random_order(int max) {
         } else {
             fprintf(stderr, "int_list_append ptr realloc failed\n");
             return NULL;
-        };
+        }
 
         self->items[self->length++] = j;
-    };
+    }
 
     return self;
 }
