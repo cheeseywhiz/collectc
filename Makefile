@@ -28,20 +28,22 @@ src/%:
 	$(CC) $(CFLAGS) -shared $(OBJECTS) $@.c -o $(NEW_OBJ) $(LDFLAGS) $(LDLIBS)
 	$(eval OBJECTS+=$(NEW_OBJ))
 
-src/get: jsmn src/reg
+src/get: src/reg
 src/get: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
 
 src/rand: LDLIBS+=-lm
 
 src/jsmnutils: jsmn src/reg src/rand
 
-collect: src/get src/jsmnutils src/reg
+lib: src/get src/jsmnutils src/rand src/reg
+
+collect: lib
 	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
 
 setup_test: clean build_dirs
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
 
-test: setup_test src/get src/reg src/jsmnutils src/rand
+test: setup_test lib
 	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/$@.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
 	valgrind $(VALGRIND) $(BUILD)/$@

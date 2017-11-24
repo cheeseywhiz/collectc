@@ -1,5 +1,7 @@
 build
 gmon.out
-a.jpg
+*.jpg
+*.png
 image
 image.jpg
+vgcore.*

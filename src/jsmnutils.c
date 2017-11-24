@@ -4,6 +4,7 @@
 #include "jsmn.h"
 #include "jsmnutils.h"
 #include "reg.h"
+#include "rand.h"
 
 ju_json_t* ju_parse(char *json_str) {
     ju_json_t *self = malloc(sizeof(ju_json_t));
@@ -189,16 +190,12 @@ void ju_random_free(struct ju_random_iter *self) {
     free(self);
 }
 
-#include <stdio.h>
-
 int ju_random_next(struct ju_random_iter *self) {
-    self->index++;
-
     if (self->index >= self->indices->length) {
         return -1;
     }
 
-    return self->list[self->indices->items[self->index]];
+    return self->list[self->indices->items[self->index++]];
 }
 
 struct ju_random_iter* ju_random_url_init(ju_json_t *self) {

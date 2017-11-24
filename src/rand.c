@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "rand.h"
 
@@ -25,7 +26,7 @@ static int int_list_contains(int_list *self, int num) {
 }
 
 int randbelow(int n) {
-    return floor(n * random() / RAND_MAX);
+    return floor(n * ((double) random() / RAND_MAX));
 }
 
 int_list* int_list_random_order(int max) {
