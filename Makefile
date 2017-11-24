@@ -41,6 +41,7 @@ collect: lib
 	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
 
 setup_test: clean build_dirs
+	@cd $(LIB)/jsmn && $(MAKE) test
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
 

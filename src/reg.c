@@ -34,7 +34,7 @@ int regex_starts_with(char *haystack, char *needle) {
     for (size_t i = 0; ; i++) {
         if (i == ned_len) {
             break;
-        } else if ((i == hay_len) || (i > ned_len) || (i > hay_len) || (*(haystack + i) != *(needle + i))) {
+        } else if ((i == hay_len) || (i > ned_len) || (i > hay_len) || (haystack[i] != needle[i])) {
             return 0;
         }
     }
@@ -56,9 +56,9 @@ char* regex_str_slice(char *src, int start, int end) {
         return strncpy(dest, src + start, dest_length);
     } else if (dest_length == 0) {
         return calloc(1, 1);
-    }
-
-    return NULL;
+    } else {
+        return NULL;
+    };
 }
 
 char* regex_url_fname(char *url) {
