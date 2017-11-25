@@ -4,47 +4,58 @@ TEST=$(PWD)/test
 BUILD=$(PWD)/build
 OBJ=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -pedantic-errors -O2 -fPIC -fverbose-asm -masm=intel -march=native
+CFLAGS+=-Wall -Wextra -O2 -fPIC -fverbose-asm -masm=intel -march=native -std=c99
 
-all: clean build_dirs collect
+# global jsmn flags
+CFLAGS+=-DJSMN_PARENT_LINKS
+CFLAGS+=-I$(LIB)/jsmn
+LDFLAGS+=-L$(LIB)/jsmn
+LDLIBS+=-ljsmn
+
+VALGRIND:=$(shell command -v valgrind 2>/dev/null)
+
+ifdef VALGRIND
+	TEST_CMD=valgrind $(VFLAGS) $(BUILD)/test
+else
+	TEST_CMD=$(BUILD)/test
+endif
+
+all: $(BUILD)/collect
 
 clean:
 	rm -rf build
 	@cd $(LIB)/jsmn && $(MAKE) clean
 
-build_dirs:
-	@mkdir -p $(BUILD)
-	@mkdir -p $(OBJ)
-
 jsmn:
-	$(eval CFLAGS+=-DJSMN_PARENT_LINKS)
-	@cd $(LIB)/$@ && CFLAGS="-DJSMN_PARENT_LINKS" $(MAKE)
-	$(eval CFLAGS+=-I$(LIB)/$@)
-	$(eval LDFLAGS+=-L$(LIB)/$@)
-	$(eval LDLIBS+=-ljsmn)
+	@cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
 
-src/%:
-	$(eval NEW_OBJ=$(OBJ)/$(@F).so)
-	$(CC) $(CFLAGS) -shared $(OBJECTS) $@.c -o $(NEW_OBJ) $(LDFLAGS) $(LDLIBS)
-	$(eval OBJECTS+=$(NEW_OBJ))
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-src/get: src/reg
-src/get: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
+objects: $(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
+	$(eval OBJECTS=$^)
+	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
+	$(eval LDLIBS+=-lm)
 
-src/rand: LDLIBS+=-lm
+$(PWD)/%:
+	mkdir -p $@
 
-src/jsmnutils: jsmn src/reg src/rand
+$(BUILD)/libcollect.a: jsmn $(OBJ) objects $(BUILD)
+	$(AR) rcsv $@ $(OBJECTS)
+	$(eval LDFLAGS+=-L$(BUILD))
+	$(eval LDLIBS+=-lcollect)
 
-lib: src/get src/jsmnutils src/rand src/reg
+$(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.a
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-collect: lib
-	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
-
-setup_test: clean build_dirs
-	@cd $(LIB)/jsmn && $(MAKE) test
+$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.a
+	$(eval CFLAGS+=-Og)
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-test: setup_test lib
-	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/$@.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
-	valgrind $(VALGRIND) $(BUILD)/$@
+test: $(BUILD)/test
+	@cd $(LIB)/jsmn && $(MAKE) test
+	$(TEST_CMD)
+
+.PHONY: all clean jsmn objects test
