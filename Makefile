@@ -27,7 +27,7 @@ clean:
 	@cd $(LIB)/jsmn && $(MAKE) clean
 
 jsmn:
-	@cd $(LIB)/$@ && CFLAGS="-DJSMN_PARENT_LINKS" $(MAKE)
+	@cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
 
 $(OBJ)/%.so: $(SRC)/%.c
 	$(CC) $(CFLAGS) -shared -o $@ $< $(LDFLAGS) $(LDLIBS)
