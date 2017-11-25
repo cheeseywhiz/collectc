@@ -4,7 +4,7 @@ TEST=$(PWD)/test
 BUILD=$(PWD)/build
 OBJ=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -O2 -fPIC -fverbose-asm -masm=intel -march=native
+CFLAGS+=-Wall -Wextra -O2 -fPIC -fverbose-asm -masm=intel -march=native -std=c99
 
 # global jsmn flags
 CFLAGS+=-DJSMN_PARENT_LINKS
