@@ -42,7 +42,7 @@ OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
 $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
 	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
 	$(eval LDLIBS+=-lm)
-	$(CC) $(CFLAGS) -shared -Wl,-soname=libcollect.so -o $@ $(OBJECTS) $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) -shared -o $@ $(OBJECTS) $(LDFLAGS) $(LDLIBS)
 	$(eval LDFLAGS=-L$(BUILD))
 	$(eval LDLIBS=-lcollect)
 
