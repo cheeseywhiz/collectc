@@ -29,25 +29,26 @@ clean:
 jsmn:
 	@cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
 
-$(OBJ)/%.so: $(SRC)/%.c
-	$(CC) $(CFLAGS) -shared -o $@ $< $(LDFLAGS) $(LDLIBS)
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBJ)/get.so: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
-
-$(OBJ)/rand.so: LDLIBS+=-lm
-
-objects: $(OBJ)/get.so $(OBJ)/jsmnutils.so $(OBJ)/rand.so $(OBJ)/reg.so
+objects: $(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
 	$(eval OBJECTS=$^)
+	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
+	$(eval LDLIBS+=-lm)
 
 $(PWD)/%:
 	mkdir -p $@
 
-lib: jsmn $(OBJ) objects
+$(BUILD)/libcollect.a: jsmn $(OBJ) objects $(BUILD)
+	$(AR) rcsv $@ $(OBJECTS)
+	$(eval LDFLAGS+=-L$(BUILD))
+	$(eval LDLIBS+=-lcollect)
 
-$(BUILD)/collect: $(SRC)/main.c lib $(BUILD)
+$(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.a
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-$(BUILD)/test: $(TEST)/test.c lib $(BUILD)
+$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.a
 	$(eval CFLAGS+=-Og)
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
@@ -57,4 +58,4 @@ test: $(BUILD)/test
 	@cd $(LIB)/jsmn && $(MAKE) test
 	$(TEST_CMD)
 
-.PHONY: all clean jsmn objects lib test
+.PHONY: all clean jsmn objects test
