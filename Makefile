@@ -4,7 +4,7 @@ TEST=$(PWD)/test
 BUILD=$(PWD)/build
 OBJ=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -O2 -fPIC -fverbose-asm -masm=intel -march=native -std=c99
+CFLAGS+=-Wall -Wextra -std=c99 -O2 -fPIC -fverbose-asm -masm=intel -march=native
 
 # global jsmn flags
 CFLAGS+=-DJSMN_PARENT_LINKS
@@ -32,30 +32,25 @@ jsmn:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-objects: $(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
+make_objects: $(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
 	$(eval OBJECTS=$^)
 	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
 	$(eval LDLIBS+=-lm)
 
+objects: jsmn make_objects
+
 $(PWD)/%:
 	mkdir -p $@
 
-$(BUILD)/libcollect.a: jsmn $(OBJ) objects $(BUILD)
-	$(AR) rcsv $@ $(OBJECTS)
-	$(eval LDFLAGS+=-L$(BUILD))
-	$(eval LDLIBS+=-lcollect)
-
-$(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.a
+$(BUILD)/collect: $(SRC)/main.c $(OBJ) objects $(BUILD)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.a
-	$(eval CFLAGS+=-Og)
-	$(eval CFLAGS+=-g3)
-	$(eval CFLAGS+=-I$(SRC))
+$(BUILD)/test: $(TEST)/test.c $(OBJ) objects $(BUILD)
+	$(eval CFLAGS+=-Og -g3 -I$(SRC))
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
 test: $(BUILD)/test
 	@cd $(LIB)/jsmn && $(MAKE) test
 	$(TEST_CMD)
 
-.PHONY: all clean jsmn objects test
+.PHONY: all clean jsmn make_objects objects test
