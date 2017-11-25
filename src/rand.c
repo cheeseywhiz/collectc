@@ -26,11 +26,11 @@ static int int_list_contains(int_list *self, int num) {
 }
 
 int randbelow(int n) {
-    return floor(n * ((double) random() / RAND_MAX));
+    return floor(n * ((double) rand() / RAND_MAX));
 }
 
 int_list* int_list_random_order(int max) {
-    srandom(urandom_number());
+    srand(urandom_number());
     int i, j;
     int_list *self = malloc(sizeof(int_list));
 

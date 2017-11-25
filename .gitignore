@@ -1,3 +1,4 @@
+lib/jsmn
 build
 gmon.out
 *.jpg
