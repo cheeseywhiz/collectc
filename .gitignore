@@ -1,8 +1,8 @@
-lib/jsmn
 build
+obj
 gmon.out
+vgcore.*
 *.jpg
 *.png
 image
 image.jpg
-vgcore.*

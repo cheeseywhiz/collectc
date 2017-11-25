@@ -2,9 +2,9 @@ SRC=$(PWD)/src
 LIB=$(PWD)/lib
 TEST=$(PWD)/test
 BUILD=$(PWD)/build
-OBJ=$(BUILD)/obj
+OBJ=$(PWD)/obj
 
-CFLAGS+=-Wall -Wextra -O2 -fPIC -fverbose-asm -masm=intel -march=native -std=c99
+CFLAGS+=-Wall -Wextra -std=c99 -O2 -fPIC -fverbose-asm -masm=intel -march=native
 
 # global jsmn flags
 CFLAGS+=-DJSMN_PARENT_LINKS
@@ -23,39 +23,37 @@ endif
 all: $(BUILD)/collect
 
 clean:
-	rm -rf build
-	@cd $(LIB)/jsmn && $(MAKE) clean
+	rm -rf $(BUILD) $(OBJ)
+	cd $(LIB)/jsmn && $(MAKE) clean
 
 jsmn:
-	@cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
+	cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
+
+deps: jsmn
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-objects: $(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
-	$(eval OBJECTS=$^)
-	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
-	$(eval LDLIBS+=-lm)
-
 $(PWD)/%:
 	mkdir -p $@
 
-$(BUILD)/libcollect.a: jsmn $(OBJ) objects $(BUILD)
-	$(AR) rcsv $@ $(OBJECTS)
-	$(eval LDFLAGS+=-L$(BUILD))
-	$(eval LDLIBS+=-lcollect)
+OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
 
-$(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.a
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+$(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
+	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
+	$(eval LDLIBS+=-lm)
+	$(CC) $(CFLAGS) -shared -o $@ $(OBJECTS) $(LDFLAGS) $(LDLIBS)
+	$(eval LDFLAGS=-L$(BUILD))
+	$(eval LDLIBS=-lcollect)
 
-$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.a
-	$(eval CFLAGS+=-Og)
-	$(eval CFLAGS+=-g3)
-	$(eval CFLAGS+=-I$(SRC))
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+$(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+
+$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.so
+	$(CC) $(CFLAGS) -Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
 test: $(BUILD)/test
-	@cd $(LIB)/jsmn && $(MAKE) test
+	cd $(LIB)/jsmn && $(MAKE) test
 	$(TEST_CMD)
 
-.PHONY: all clean jsmn objects test
+.PHONY: all clean jsmn deps objects test
