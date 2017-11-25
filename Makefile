@@ -6,45 +6,55 @@ OBJ=$(BUILD)/obj
 
 CFLAGS+=-Wall -Wextra -pedantic-errors -O2 -fPIC -fverbose-asm -masm=intel -march=native
 
-all: clean build_dirs collect
+# global jsmn flags
+CFLAGS+=-DJSMN_PARENT_LINKS
+CFLAGS+=-I$(LIB)/jsmn
+LDFLAGS+=-L$(LIB)/jsmn
+LDLIBS+=-ljsmn
+
+VALGRIND:=$(shell command -v valgrind 2>/dev/null)
+
+ifdef VALGRIND
+	TEST_CMD=valgrind $(VFLAGS) $(BUILD)/test
+else
+	TEST_CMD=$(BUILD)/test
+endif
+
+all: $(BUILD)/collect
 
 clean:
 	rm -rf build
 	@cd $(LIB)/jsmn && $(MAKE) clean
 
-build_dirs:
-	@mkdir -p $(BUILD)
-	@mkdir -p $(OBJ)
-
 jsmn:
-	$(eval CFLAGS+=-DJSMN_PARENT_LINKS)
 	@cd $(LIB)/$@ && CFLAGS="-DJSMN_PARENT_LINKS" $(MAKE)
-	$(eval CFLAGS+=-I$(LIB)/$@)
-	$(eval LDFLAGS+=-L$(LIB)/$@)
-	$(eval LDLIBS+=-ljsmn)
 
-src/%:
-	$(eval NEW_OBJ=$(OBJ)/$(@F).so)
-	$(CC) $(CFLAGS) -shared $(OBJECTS) $@.c -o $(NEW_OBJ) $(LDFLAGS) $(LDLIBS)
-	$(eval OBJECTS+=$(NEW_OBJ))
+$(OBJ)/%.so: $(SRC)/%.c
+	$(CC) $(CFLAGS) -shared -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-src/get: src/reg
-src/get: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
+$(OBJ)/get.so: LDLIBS+=$(shell pkg-config --libs --cflags libcurl)
 
-src/rand: LDLIBS+=-lm
+$(OBJ)/rand.so: LDLIBS+=-lm
 
-src/jsmnutils: jsmn src/reg src/rand
+objects: $(OBJ)/get.so $(OBJ)/jsmnutils.so $(OBJ)/rand.so $(OBJ)/reg.so
+	$(eval OBJECTS=$^)
 
-lib: src/get src/jsmnutils src/rand src/reg
+$(PWD)/%:
+	mkdir -p $@
 
-collect: lib
-	$(CC) $(CFLAGS) $(OBJECTS) $(SRC)/main.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
+lib: $(BUILD) $(OBJ) jsmn objects
 
-setup_test: clean build_dirs
-	@cd $(LIB)/jsmn && $(MAKE) test
+$(BUILD)/collect: $(SRC)/main.c lib
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+
+$(BUILD)/test: $(TEST)/test.c lib
+	$(eval CFLAGS+=-Og)
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-test: setup_test lib
-	$(CC) $(CFLAGS) $(OBJECTS) $(TEST)/$@.c -o $(BUILD)/$@ $(LDFLAGS) $(LDLIBS)
-	valgrind $(VALGRIND) $(BUILD)/$@
+test: $(BUILD)/test
+	@cd $(LIB)/jsmn && $(MAKE) test
+	$(TEST_CMD)
+
+.PHONY: all clean jsmn objects lib test
