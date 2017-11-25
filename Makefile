@@ -42,12 +42,12 @@ objects: $(OBJ)/get.so $(OBJ)/jsmnutils.so $(OBJ)/rand.so $(OBJ)/reg.so
 $(PWD)/%:
 	mkdir -p $@
 
-lib: $(BUILD) $(OBJ) jsmn objects
+lib: jsmn $(OBJ) objects
 
-$(BUILD)/collect: $(SRC)/main.c lib
+$(BUILD)/collect: $(SRC)/main.c lib $(BUILD)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-$(BUILD)/test: $(TEST)/test.c lib
+$(BUILD)/test: $(TEST)/test.c lib $(BUILD)
 	$(eval CFLAGS+=-Og)
 	$(eval CFLAGS+=-g3)
 	$(eval CFLAGS+=-I$(SRC))
