@@ -2,10 +2,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #include "get.h"
 #include "reg.h"
 #include "jsmnutils.h"
+
+#define ERRNO(x) errno = 0; x; if (errno) printf("%s (%d)\n", strerror(errno), errno);
 
 int main(int argc, char **argv) {
     char *reddit_url;
@@ -54,8 +58,8 @@ int main(int argc, char **argv) {
             printf("%s\n", path);
 
             int im_fd = open(path, flags, mode);
-            write(im_fd, im->content, im->length);
-            close(im_fd);
+            ERRNO(write(im_fd, im->content, im->length));
+            ERRNO(close(im_fd));
 
             free(path);
             break_ = 1;
