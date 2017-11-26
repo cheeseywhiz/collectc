@@ -10,9 +10,13 @@
 unsigned int urandom_number(void) {
     unsigned int buf[sizeof(unsigned int)];
     int urandom = open("/dev/urandom", O_RDONLY);
-    read(urandom, buf, sizeof(unsigned int));
-    close(urandom);
-    return *buf;
+    int read_size = read(urandom, buf, sizeof(unsigned int));
+
+    if (close(urandom) || read_size != sizeof(unsigned int)) {
+        return 0;
+    } else {
+        return *buf;
+    };
 }
 
 static int int_list_contains(int_list *self, int num) {
