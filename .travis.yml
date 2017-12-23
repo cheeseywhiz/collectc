@@ -2,7 +2,7 @@ language: c
 
 before_install: sudo apt-get install valgrind
 
-script: make deps && make test
+script: ./.travis-script.sh
 
 notifications:
   email: false

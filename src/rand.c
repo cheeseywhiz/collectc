@@ -11,8 +11,9 @@ unsigned int urandom_number(void) {
     unsigned int buf[sizeof(unsigned int)];
     int urandom = open("/dev/urandom", O_RDONLY);
     int read_size = read(urandom, buf, sizeof(unsigned int));
+    int close_code = close(urandom);
 
-    if (close(urandom) || read_size != sizeof(unsigned int)) {
+    if (read_size != sizeof(unsigned int) || close_code != 0) {
         return 0;
     } else {
         return *buf;

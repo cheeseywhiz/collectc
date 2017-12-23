@@ -1,10 +1,11 @@
-SRC=$(PWD)/src
-LIB=$(PWD)/lib
-TEST=$(PWD)/test
-BUILD=$(PWD)/build
-OBJ=$(PWD)/obj
+PWD:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+SRC:=$(PWD)/src
+LIB:=$(PWD)/lib
+TEST:=$(PWD)/test
+BUILD:=$(PWD)/build
+OBJ:=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -std=c99 -O2 -fPIC -fverbose-asm -masm=intel -march=native
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native
 
 # global jsmn flags
 CFLAGS+=-DJSMN_PARENT_LINKS
