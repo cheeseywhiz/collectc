@@ -9,7 +9,8 @@
 #include "reg.h"
 #include "jsmnutils.h"
 
-#define ERRNO(x) errno = 0; x; if (errno) printf("%s (%d)\n", strerror(errno), errno);
+int return_code;
+#define ERRNO(x) errno = 0; return_code = x; if (errno) printf("%s (%d)\n", strerror(errno), errno);
 
 int main(int argc, char **argv) {
     char *reddit_url;

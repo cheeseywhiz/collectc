@@ -88,5 +88,7 @@ char* path_url_fname(char *path, char *url) {
         return NULL;
     }
 
-    return path_join(path, new_fname);
+    char *new_path = path_join(path, new_fname);
+    free(new_fname);
+    return new_path;
 }
