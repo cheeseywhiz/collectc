@@ -55,7 +55,7 @@ int path_test_main(void) {
     char *dev = path_join(root, "dev");
 
     if (path_exists(dev)) {
-        printf("%s was properly joined\n", dev);
+        printf("%s was properly joined from /\n", dev);
     } else {
         printf("%s does not exist\n", tmp_dir);
     }
@@ -65,12 +65,23 @@ int path_test_main(void) {
     char *desktop = path_join(home, "Desktop");
 
     if (path_exists(desktop)) {
-        printf("%s was properly joined\n", desktop);
+        printf("%s was properly joined from ~\n", desktop);
     } else {
-        printf("%s does not exist\n", tmp_dir);
+        printf("%s does not exist\n", desktop);
     }
 
     free(desktop);
+
+    char *url = "http://i.imgur.com/i/image.jpg";
+    char *path_url = path_url_fname(home, url);
+
+    if (path_url != NULL) {
+        printf("%s was properly formed from %s\n", path_url, url);
+    } else {
+        printf("%s was not properly formed from %s\n", path_url, url);
+    }
+
+    free(path_url);
 
     return 0;
 }
