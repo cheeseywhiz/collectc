@@ -1,6 +1,7 @@
 #include <regex.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "reg.h"
 
@@ -25,6 +26,22 @@ fail:
 cleanup:
     regfree(&reg);
     return needle;
+}
+
+int regex_contains(char *needle, char *haystack) {
+    size_t needle_len = strlen(needle);
+    ssize_t pattern_len = 1 + needle_len + 1;
+    char *pattern = calloc(pattern_len + 1, 1);
+
+    if (sprintf(pattern, "(%s)", needle) != pattern_len) {
+        return 0;
+    };
+
+    char *match = regex_match_one_subexpr(pattern, haystack, REG_EXTENDED);
+    int contains = strlen(match) != 0;
+    free(pattern);
+    free(match);
+    return contains;
 }
 
 int regex_starts_with(char *haystack, char *needle) {

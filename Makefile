@@ -24,7 +24,7 @@ endif
 all: $(BUILD)/collect
 
 clean:
-	rm -rf $(BUILD) $(OBJ) $(TEST)/*.o $(TEST)/*.so vgcore.* *.jpg *.png
+	rm -rf $(shell cat .gitignore)
 	cd $(LIB)/jsmn && $(MAKE) clean
 
 jsmn:
@@ -32,14 +32,11 @@ jsmn:
 
 deps: jsmn
 
-$(OBJ)/%.o: $(SRC)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(TEST)/%.o: $(TEST)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
 $(PWD)/%:
 	mkdir -p $@
+
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o
 
@@ -53,23 +50,26 @@ $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
 $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-TEST_OBJS:=$(TEST)/jsmntest.o $(TEST)/pathtest.o $(TEST)/randtest.o $(TEST)/regtest.o
+$(OBJ)/%.o: $(TEST)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+TEST_OBJS:=$(OBJ)/jsmntest.o $(OBJ)/pathtest.o $(OBJ)/randtest.o $(OBJ)/regtest.o
 
 testflags:
 	$(eval CFLAGS+=-Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD))
 
-$(TEST)/libtest.so: $(TEST) testflags $(TEST_OBJS)
+$(BUILD)/libtest.so: $(TEST) testflags $(TEST_OBJS)
 	$(CC) $(CFLAGS) -shared -o $@ $(TEST_OBJS) $(LDFLAGS) $(LDLIBS)
 	$(eval LDFLAGS+=-L$(TEST))
 	$(eval LDLIBS+=-ltest)
 
-$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.so $(TEST)/libtest.so
+$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
 testdeps:
 	cd $(LIB)/jsmn && $(MAKE) test
 
 test: $(BUILD)/test
-	LD_LIBRARY_PATH=test $(TEST_CMD)
+	LD_LIBRARY_PATH=$(BUILD) $(TEST_CMD)
 
-.PHONY: all clean jsmn deps objects testflags testdeps test
+.PHONY: clean jsmn deps testdeps all objects testflags test

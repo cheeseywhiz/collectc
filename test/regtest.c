@@ -70,6 +70,37 @@ struct score test_match_one_subexpr(void) {
     return score_match_one_subexpr;
 }
 
+struct case_contains {
+    char *needle;
+    char *haystack;
+    int expected;
+};
+
+struct score test_contains(void) {
+    struct score score_contains = {0, 0};
+    int n_cases = 5;
+    struct case_contains cases[] = {
+        {"removed", "http://i.imgur.com/removed.jpg", 1},
+        {"image", "image/png", 1},
+        {"apple", "orange", 0},
+        {"house", "tree", 0},
+        {"tree", "treehouse", 1}
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        struct case_contains case_ = cases[i];
+        int actual = regex_contains(case_.needle, case_.haystack);
+
+        if (actual == case_.expected) {
+            score_contains.passing++;
+        } else {
+            score_contains.failing++;
+        }
+    }
+
+    return score_contains;
+}
+
 struct case_str_slice {
     int start;
     int end;
@@ -137,13 +168,16 @@ struct score test_url_fname(void) {
     return score_url_fname;
 }
 
-#define REPORT(score) printf("Passing: %d\nFailing: %d\n", score.passing, score.failing);
+struct score sc;
+#define REPORT(score) sc = score; printf("Passing: %d\nFailing: %d\n", sc.passing, sc.failing);
 
 int regex_test_main(void) {
     printf("regex_starts_with():\n");
     REPORT(test_starts_with());
     printf("regex_match_one_subexpr():\n");
     REPORT(test_match_one_subexpr());
+    printf("regex_contains():\n");
+    REPORT(test_contains());
     printf("regex_str_slice():\n");
     REPORT(test_str_slice())
     printf("regex_url_fname():\n");

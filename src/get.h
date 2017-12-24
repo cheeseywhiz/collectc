@@ -7,11 +7,13 @@ struct response {
     char *type;
     char *content;
     size_t length;
+    char *url;
 };
 
 void free_response(struct response*);
 
 /* Abstraction for curl performance */
 struct response* get_response(char*);
+struct response* get_image(char *url);
 
 #endif /* GET_H */

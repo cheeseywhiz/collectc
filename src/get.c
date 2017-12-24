@@ -13,7 +13,7 @@ void free_response(struct response *self) {
 
     if (self->content) {
         free(self->content);
-    };
+    }
 
     free(self);
 }
@@ -105,7 +105,6 @@ struct response* get_response(char *url) {
     struct response *re = malloc(sizeof(struct response));
 
     if (!re) {
-        fprintf(stderr, "malloc struct response*\n");
         exit = 1;
         goto cleanup2;
     };
@@ -126,10 +125,11 @@ struct response* get_response(char *url) {
     re->type = match;
     re->content = ct_buf->content;
     re->length = ct_buf->length;
+    re->url = url;
 
     if (hd_buf->content) {
         free(hd_buf->content);
-    };
+    }
 
 cleanup2:
     free(hd_buf);
@@ -144,4 +144,38 @@ cleanup1:
     } else {
         return NULL;
     };
+}
+
+static int verify_image(struct response *re) {
+    char *error_msg = "";
+
+    if (regex_contains("removed", re->url)) {
+        error_msg = "Appears to be removed";
+    }
+
+    if (!regex_contains("image", re->type)) {
+        error_msg = "Not an image";
+    }
+
+    if (regex_contains("gif", re->type)) {
+        error_msg = "Is a .gif";
+    }
+
+    if (strlen(error_msg)) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+struct response* get_image(char *url) {
+    struct response *re = get_response(url);
+
+    if (!re) {
+        return NULL;
+    } else if (verify_image(re)) {
+        return re;
+    } else {
+        return NULL;
+    }
 }

@@ -1,8 +1,5 @@
 build
-obj
 gmon.out
 vgcore.*
 *.jpg
 *.png
-test/*.o
-test/*.so
