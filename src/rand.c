@@ -17,7 +17,7 @@ unsigned int urandom_number(void) {
         return 0;
     } else {
         return *buf;
-    };
+    }
 }
 
 static int int_list_contains(int_list *self, int num) {

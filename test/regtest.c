@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <regex.h>
 #include "reg.h"
@@ -45,7 +46,7 @@ struct case_match_one_subexpr {
 struct score test_match_one_subexpr(void) {
     struct score score_match_one_subexpr = {0, 0};
     int n_cases = 4;
-    char *pattern = "\\([0-9]{03}\\)-[0-9]{3}-([0-9]{4})";
+    char *pattern = "\\([0-9]{3}\\)-[0-9]{3}-([0-9]{4})";
     struct case_match_one_subexpr cases[4] = {
         {"(012)-128-1361", "1361"},
         {"(459)-103-1916", "1916"},

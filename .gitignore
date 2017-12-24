@@ -4,5 +4,5 @@ gmon.out
 vgcore.*
 *.jpg
 *.png
-image
-image.jpg
+test/*.o
+test/*.so

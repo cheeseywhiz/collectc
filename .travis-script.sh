@@ -1,2 +1,2 @@
 #!/bin/bash
-make clean && make deps && make test && make && LD_LIBRARY_PATH=build ./build/collect
+make clean && make deps && make && make test && LD_LIBRARY_PATH=build ./build/collect
