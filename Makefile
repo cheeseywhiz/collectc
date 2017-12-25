@@ -41,9 +41,6 @@ deps: jsmn
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(PWD)/%:
-	mkdir -p $@
-
 OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o
 
 $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
@@ -77,5 +74,8 @@ testdeps:
 
 test: $(BUILD)/test
 	LD_LIBRARY_PATH=$(BUILD) $(TEST_CMD)
+
+$(PWD)/%:
+	mkdir -p $@
 
 .PHONY: clean jsmn deps testdeps all objects testflags test
