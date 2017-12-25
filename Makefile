@@ -38,11 +38,11 @@ jsmn:
 
 deps: jsmn
 
-$(PWD)/%:
-	mkdir -p $@
-
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(PWD)/%:
+	mkdir -p $@
 
 OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o
 
@@ -64,7 +64,7 @@ TEST_OBJS:=$(OBJ)/jsmntest.o $(OBJ)/pathtest.o $(OBJ)/randtest.o $(OBJ)/regtest.
 testflags:
 	$(eval CFLAGS+=-Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD))
 
-$(BUILD)/libtest.so: $(TEST) testflags $(TEST_OBJS)
+$(BUILD)/libtest.so: $(OBJ) testflags $(TEST_OBJS) $(BUILD)
 	$(CC) $(CFLAGS) -shared -o $@ $(TEST_OBJS) $(LDFLAGS) $(LDLIBS)
 	$(eval LDFLAGS+=-L$(TEST))
 	$(eval LDLIBS+=-ltest)
