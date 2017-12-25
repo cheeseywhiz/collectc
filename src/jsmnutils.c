@@ -55,7 +55,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
     }
     
     int i;
-    
+
     for (i = ju_array_next(iter); i > 0; i = ju_array_next(iter)) {
         jsmntok_t token = self->tokens[i];
         char *tok_str = regex_str_slice(self->json_str, token.start, token.end);

@@ -1,16 +1,7 @@
 #include <stdio.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
 
-#include "get.h"
-#include "reg.h"
-#include "jsmnutils.h"
-
-int return_code;
-#define ERRNO(x) errno = 0; return_code = x; if (errno) printf("%s (%d)\n", strerror(errno), errno);
+#include "raw.h"
+#include "path.h"
 
 int main(int argc, char **argv) {
     char *reddit_url;
@@ -21,58 +12,27 @@ int main(int argc, char **argv) {
         reddit_url = argv[1];
     }
 
-    struct response *re = get_response(reddit_url);
+    char *dir = ".";
 
-    if (!re) {
-        fprintf(stderr, "get_response failed\n");
+    if (path_mkdir(dir, MODE_DEF, EXISTS_OK_DEF)) {
         return 1;
     }
 
-    ju_json_t *json = ju_parse(re->content);
+    raw_listing *posts = raw_new_listing(dir, reddit_url);
 
-    if (!json) {
-        fprintf(stderr, "ju_parse failed\n");
-        free_response(re);
+    if (!posts) {
         return 1;
     }
 
-    struct ju_random_iter *urls = ju_random_url_init(json);
-    
-    if (!urls) {
-        fprintf(stderr, "ju_random_url_init failed\n");
-        ju_free(json);
-        free_response(re);
+    struct raw_post *post = raw_listing_flags_next_download(posts, NO_REPEAT);
+
+    if (!post) {
+        raw_free_listing(posts);
         return 1;
     }
-    
-    char *url;
-    int break_ = 0;
 
-    int flags = O_CREAT | O_WRONLY | O_TRUNC;
-    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-
-    for (url = ju_random_url_next(urls); url; url = ju_random_url_next(urls)) {
-        struct response *im = get_response(url);
-
-        if (regex_starts_with(im->type, "image")) {
-            char *path = regex_url_fname(url);
-            printf("%s\n", path);
-
-            int im_fd = open(path, flags, mode);
-            ERRNO(write(im_fd, im->content, im->length));
-            ERRNO(close(im_fd));
-
-            free(path);
-            break_ = 1;
-        }
-
-        free_response(im);
-        free(url);
-        if (break_) break;
-    }
-
-    ju_random_free(urls);
-    ju_free(json);
-    free_response(re);
+    printf("%s\n", post->path);
+    raw_free_post(post);
+    raw_free_listing(posts);
     return 0;
 }

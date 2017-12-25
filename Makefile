@@ -5,11 +5,17 @@ TEST:=$(PWD)/test
 BUILD:=$(PWD)/build
 OBJ:=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native -O2
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native
+
+ifdef DEBUG
+	CFLAGS+=-O3 -g3
+	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
+else
+	CFLAGS+=-O2
+endif
 
 # global jsmn flags
-CFLAGS+=-DJSMN_PARENT_LINKS
-CFLAGS+=-I$(LIB)/jsmn
+CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 LDFLAGS+=-L$(LIB)/jsmn
 LDLIBS+=-ljsmn
 
@@ -38,7 +44,7 @@ $(PWD)/%:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o
+OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o
 
 $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
 	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))

@@ -1,5 +1,6 @@
 build
 gmon.out
 vgcore.*
+callgrind.out.*
 *.jpg
 *.png

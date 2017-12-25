@@ -6,7 +6,7 @@
 
 char* path_home(void);
 char* path_join(char *path, char *other);
-int path_cmp(char *path, char *other);
+int path_eq(char *path, char *other);
 int path_exists(char *path);
 int path_is_abs(char *path);
 int path_open_write(char *path);

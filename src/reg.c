@@ -5,6 +5,17 @@
 
 #include "reg.h"
 
+char* strdup(char *str) {
+    char *new = calloc(strlen(str) + 1, 1);
+
+    if (!new) {
+        return NULL;
+    }
+
+    strcpy(new, str);
+    return new;
+}
+
 char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     char *needle;
     regex_t reg;

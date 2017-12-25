@@ -1,11 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "path.h"
 #include "reg.h"
@@ -30,23 +28,23 @@ char* path_home(void) {
 /* TODO: varargs variant (self, other, other, other) */
 char* path_join(char *path, char *other) {
     if (path_is_abs(other)) {
-        return other;
+        return strdup(other);
     }
 
     size_t other_len = strlen(other);
 
     if (!other_len) {
-        return path;
+        return strdup(path);
     }
 
-    if (path_cmp(path, "/")) {
+    if (path_eq(path, "/")) {
         path = "";
     }
 
-    ssize_t new_path_len = strlen(path) + 1 + other_len;
+    size_t new_path_len = strlen(path) + 1 + other_len;
     char *new_path_buf = calloc(new_path_len + 1, 1);
 
-    if (sprintf(new_path_buf, "%s/%s", path, other) != new_path_len) {
+    if (sprintf(new_path_buf, "%s/%s", path, other) < 0) {
         free(new_path_buf);
         return NULL;
     } else {
@@ -54,7 +52,7 @@ char* path_join(char *path, char *other) {
     }
 }
 
-int path_cmp(char *path, char *other) {
+int path_eq(char *path, char *other) {
     return strcmp(path, other) == 0;
 }
 
