@@ -4,7 +4,7 @@
 #include "path.h"
 
 void test_path_norm(void) {
-    int n_cases = 10;
+    int n_cases = 11;
     char *cases[] = {
         "~",
         "~/dir/file",
@@ -15,7 +15,8 @@ void test_path_norm(void) {
         "./",
         ".",
         "./file",
-        "./dir/"
+        "dir/",
+        "./both/",
     };
 
     for (int i = 0; i < n_cases; i++) {

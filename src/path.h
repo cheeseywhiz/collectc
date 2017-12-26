@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-char* path_expand_user(char *path);
 char* path_norm(char *path);
 char* path_home(void);
 char* path_join(char *path, char *other);

@@ -20,9 +20,13 @@ unsigned int urandom_number(void) {
     }
 }
 
-static int int_list_contains(int_list *self, int num) {
-    for (int i = 0; i < self->length; i++) {
-        if (num == self->items[i]) {
+int randbelow(int n) {
+    return floor(n * ((double) rand() / RAND_MAX));
+}
+
+static int items_contains_num(int *items, int items_length, int num) {
+    for (int i = 0; i < items_length; i++) {
+        if (num == items[i]) {
             return 1;
         }
     }
@@ -30,35 +34,36 @@ static int int_list_contains(int_list *self, int num) {
     return 0;
 }
 
-int randbelow(int n) {
-    return floor(n * ((double) rand() / RAND_MAX));
+static int new_unique_rand_below(int *items, int items_length, int random_max) {
+    int i = 0;
+    int num = randbelow(random_max);
+
+    for (; i < items_length && items_contains_num(items, items_length, num);) {
+        i++;
+        num = randbelow(random_max);
+    }
+
+    return num;
 }
 
 int_list* int_list_random_order(int max) {
     srand(urandom_number());
-    int i, j;
     int_list *self = malloc(sizeof(int_list));
 
     if (!self) {
-        fprintf(stderr, "int_list_random_order self malloc failed\n");
         return NULL;
     }
 
-    self->items = NULL;
-    self->length = 0;
+    self->length = max;
+    self->items = calloc(self->length, sizeof(int));
 
-    for (i = 0; i < max; i++) {
-        for (j = randbelow(max); int_list_contains(self, j); j = randbelow(max));
-        int *ptr = realloc(self->items, sizeof(int) * (self->length + 1));
+    if (!self->items) {
+        free(self);
+        return NULL;
+    }
 
-        if (ptr) {
-            self->items = ptr;
-        } else {
-            fprintf(stderr, "int_list_append ptr realloc failed\n");
-            return NULL;
-        }
-
-        self->items[self->length++] = j;
+    for (int i = 0; i < self->length; i++) {
+        self->items[i] = new_unique_rand_below(self->items, i, max);
     }
 
     return self;

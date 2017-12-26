@@ -7,7 +7,7 @@ OBJ:=$(BUILD)/obj
 
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native
 
-ifdef DEBUG
+ifeq ($(DEBUG),1)
 	CFLAGS+=-O3 -g3
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
 else

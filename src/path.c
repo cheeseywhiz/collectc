@@ -19,7 +19,7 @@ static char* home_dir_user(char *username) {
     return strdup(pwd->pw_dir);
 }
 
-char* path_expand_user(char *path) {
+static char* expand_user(char *path) {
     path = strdup(path);
 
     if (!path) {
@@ -106,14 +106,13 @@ static char* trim_path_ends(char *path) {
 }
 
 char* path_norm(char *path) {
-    char *new_path;
     path = strdup(path);
 
     if (!path) {
         return NULL;
     }
 
-    new_path = path_expand_user(path);
+    char *new_path = expand_user(path);
     free(path);
     path = new_path;
 
@@ -217,21 +216,7 @@ char* path_url_fname(char *path, char *url) {
         return NULL;
     }
 
-    char *new_path;
-    new_path = path_join(path, new_fname);
+    char *new_path = path_join(path, new_fname);
     free(new_fname);
-
-    if (!new_path) {
-        return NULL;
-    }
-
-    path = new_path;
-    new_path = path_norm(path);
-    free(path);
-
-    if (!new_path) {
-        return NULL;
-    }
-
     return new_path;
 }

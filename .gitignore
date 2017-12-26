@@ -1,4 +1,5 @@
 build
+build.log
 gmon.out
 vgcore.*
 callgrind.out.*
