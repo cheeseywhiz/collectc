@@ -32,7 +32,7 @@ char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     }
 
 fail:
-    needle = calloc(1, 1);
+    needle = NULL;
 
 cleanup:
     regfree(&reg);
@@ -49,25 +49,64 @@ int regex_contains(char *needle, char *haystack) {
     };
 
     char *match = regex_match_one_subexpr(pattern, haystack, REG_EXTENDED);
+
+    if (!match) {
+        free(pattern);
+        return 0;
+    }
+
     int contains = strlen(match) != 0;
     free(pattern);
     free(match);
     return contains;
 }
 
+static char* str_rev(char *s) {
+    size_t s_len = strlen(s);
+    char *new = calloc(s_len + 1, 1);
+
+    if (!new) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < s_len; i++) {
+        new[i] = s[s_len - 1 - i];
+    }
+
+    return new;
+}
+
 int regex_starts_with(char *haystack, char *needle) {
     size_t ned_len = strlen(needle);
     size_t hay_len = strlen(haystack);
 
-    for (size_t i = 0; ; i++) {
-        if (i == ned_len) {
-            break;
-        } else if ((i == hay_len) || (i > ned_len) || (i > hay_len) || (haystack[i] != needle[i])) {
+    for (size_t i = 0; i < strlen(needle); i++) {
+        if ((i >= ned_len) || (i >= hay_len) || (haystack[i] != needle[i])) {
             return 0;
         }
     }
 
     return 1;
+}
+
+int regex_ends_with(char *haystack, char *needle) {
+    char *hay_rev = str_rev(haystack);
+
+    if (!hay_rev) {
+        return 0;
+    }
+
+    char *needle_rev = str_rev(needle);
+
+    if (!needle_rev) {
+        free(hay_rev);
+        return 0;
+    }
+
+    int ends_with = regex_starts_with(hay_rev, needle_rev);
+    free(needle_rev);
+    free(hay_rev);
+    return ends_with;
 }
 
 char* regex_str_slice(char *src, int start, int end) {

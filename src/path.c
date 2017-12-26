@@ -4,9 +4,159 @@
 #include <pwd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <regex.h>
 
 #include "path.h"
 #include "reg.h"
+
+static char* home_dir_user(char *username) {
+    struct passwd *pwd = getpwnam(username);
+
+    if (!pwd) {
+        return NULL;
+    }
+
+    return strdup(pwd->pw_dir);
+}
+
+char* path_expand_user(char *path) {
+    if (path_eq(path, "~")) {
+        return path_home();
+    }
+
+    path = strdup(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    char *pattern = "^~([^/]*)";
+    char *user = regex_match_one_subexpr(pattern, path, REG_EXTENDED);
+
+    if (!user) {
+        return path;
+    }
+
+    char *home;
+
+    if (strlen(user)) {
+        home = home_dir_user(user);
+    } else {
+        home = path_home();
+    }
+
+    if (!home) {
+        goto cleanup;
+    }
+
+    char *after_home = regex_str_slice(path, 1 + strlen(user), strlen(path));
+
+    if (!after_home) {
+        free(home);
+        goto fail;
+    } else if (!strlen(after_home)) {
+        free(after_home);
+        free(path);
+        path = home;
+        goto cleanup;
+    }
+
+    char *new_path = path_join(home, after_home + 1);
+    free(after_home);
+    free(home);
+
+    if (!new_path) {
+        goto fail;
+    }
+
+    free(path);
+    path = new_path;
+    goto cleanup;
+
+fail:
+    free(path);
+    path = NULL;
+
+cleanup:
+    free(user);
+    return path;
+}
+
+static char* trim_trailing_slash(char *path) {
+    path = strdup(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    if (!path_eq(path, "/") && regex_ends_with(path, "/")) {
+        char *new_path = regex_str_slice(path, 0, strlen(path) - 1);
+        free(path);
+
+        if (!new_path) {
+            return NULL;
+        }
+
+        path = new_path;
+    }
+
+    return path;
+}
+
+static char* trim_initial_point_slash(char *path) {
+    path = strdup(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    if (regex_starts_with(path, "./")) {
+        char *new_path = regex_str_slice(path, 2, strlen(path));
+        free(path);
+
+        if (!new_path) {
+            return NULL;
+        }
+
+        path = new_path;
+    }
+
+    return path;
+}
+
+char* path_norm(char *path) {
+    char *new_path;
+    path = strdup(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    new_path = path_expand_user(path);
+    free(path);
+
+    if (!new_path) {
+        return NULL;
+    }
+
+    path = new_path;
+    new_path = trim_trailing_slash(path);
+    free(path);
+
+    if (!new_path) {
+        return NULL;
+    }
+
+    path = new_path;
+    new_path = trim_initial_point_slash(path);
+    free(path);
+
+    if (!new_path) {
+        return NULL;
+    }
+
+    return new_path;
+}
 
 char* path_home(void) {
     char *path;
@@ -18,11 +168,11 @@ char* path_home(void) {
         path = getenv("HOME");
 
         if (path == NULL) {
-            path = "";
+            return NULL;
         }
     }
 
-    return path;
+    return strdup(path);
 }
 
 /* TODO: varargs variant (self, other, other, other) */
@@ -48,7 +198,14 @@ char* path_join(char *path, char *other) {
         free(new_path_buf);
         return NULL;
     } else {
-        return new_path_buf;
+        char *norm_path = path_norm(new_path_buf);
+        free(new_path_buf);
+
+        if (!norm_path) {
+            return NULL;
+        }
+
+        return norm_path;
     }
 }
 
@@ -86,7 +243,21 @@ char* path_url_fname(char *path, char *url) {
         return NULL;
     }
 
-    char *new_path = path_join(path, new_fname);
+    char *new_path;
+    new_path = path_join(path, new_fname);
     free(new_fname);
+
+    if (!new_path) {
+        return NULL;
+    }
+
+    path = new_path;
+    new_path = path_norm(path);
+    free(path);
+
+    if (!new_path) {
+        return NULL;
+    }
+
     return new_path;
 }

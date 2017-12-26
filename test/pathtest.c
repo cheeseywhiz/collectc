@@ -3,7 +3,30 @@
 
 #include "path.h"
 
+void test_path_norm(void) {
+    int n_cases = 6;
+    char *cases[] = {
+        "~",
+        "~http",
+        "~root/file",
+        "./",
+        ".",
+        "./file",
+        "./dir/"
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        char *case_ = cases[i];
+        char *norm = path_norm(case_);
+        printf("\"%s\" -> \"%s\"\n", case_, norm);
+        free(norm);
+    }
+}
+
 int path_test_main(void) {
+    printf("path_norm():\n");
+    test_path_norm();
+
     char *home = path_home();
     printf("~/ == %s/\n", home);
 
@@ -82,6 +105,6 @@ int path_test_main(void) {
     }
 
     free(path_url);
-
+    free(home);
     return 0;
 }

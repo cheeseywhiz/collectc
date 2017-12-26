@@ -38,6 +38,31 @@ struct score test_starts_with(void) {
     return score_starts_with;
 }
 
+struct score test_ends_with(void) {
+    struct score score_ends_with = {0, 0};
+    int n_cases = 5;
+    struct case_starts_with cases[] = {
+        {"apple", "apple", 1},
+        {"apple", "orange", 0},
+        {"apple", "ple", 1},
+        {"honeycrisp apple", "apple", 1},
+        {"orange", "apple", 0}
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        struct case_starts_with case_ = cases[i];
+        int actual = regex_ends_with(case_.haystack, case_.needle);
+
+        if (actual == case_.expected) {
+            score_ends_with.passing++;
+        } else {
+            score_ends_with.failing++;
+        }
+    }
+
+    return score_ends_with;
+}
+
 struct case_match_one_subexpr {
     char *haystack;
     char *expected;
@@ -174,6 +199,8 @@ struct score sc;
 int regex_test_main(void) {
     printf("regex_starts_with():\n");
     REPORT(test_starts_with());
+    printf("regex_ends_with():\n");
+    REPORT(test_ends_with());
     printf("regex_match_one_subexpr():\n");
     REPORT(test_match_one_subexpr());
     printf("regex_contains():\n");

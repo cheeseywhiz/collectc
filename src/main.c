@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
         reddit_url = argv[1];
     }
 
-    char *dir = ".";
+    char *dir = path_norm(".");
 
     if (path_mkdir(dir, MODE_DEF, EXISTS_OK_DEF)) {
         return 1;
@@ -34,5 +34,6 @@ int main(int argc, char **argv) {
     printf("%s\n", post->path);
     raw_free_post(post);
     raw_free_listing(posts);
+    free(dir);
     return 0;
 }
