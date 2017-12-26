@@ -31,9 +31,6 @@ struct ju_array_iter {
 struct ju_array_iter* ju_array_init(ju_json_t*, int);
 int ju_array_next(struct ju_array_iter*);
 
-struct ju_array_iter* ju_url_init(ju_json_t*);
-char* ju_url_next(struct ju_array_iter*);
-
 struct ju_random_iter {
     ju_json_t *json;
     int *list;
@@ -44,8 +41,5 @@ struct ju_random_iter {
 struct ju_random_iter* ju_random_init(ju_json_t*, int);
 void ju_random_free(struct ju_random_iter*);
 int ju_random_next(struct ju_random_iter*);
-
-struct ju_random_iter* ju_random_url_init(ju_json_t*);
-char* ju_random_url_next(struct ju_random_iter*);
 
 #endif

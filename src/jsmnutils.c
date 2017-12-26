@@ -119,38 +119,6 @@ int ju_array_next(struct ju_array_iter *self) {
     return -1;
 }
 
-struct ju_array_iter* ju_url_init(ju_json_t *self) {
-    int data_obj_i = ju_object_get(self, 0, "data");
-    int posts_arr_i = ju_object_get(self, data_obj_i, "children");
-
-    if (posts_arr_i < 1) {
-        return NULL;
-    }
-
-    return ju_array_init(self, posts_arr_i);
-}
-
-static char* ju_url_from_post_object(ju_json_t *json, int post_i) {
-    if (post_i < 0) {
-        return NULL;
-    }
-
-    int sub_data_i = ju_object_get(json, post_i, "data");
-    int url_i = ju_object_get(json, sub_data_i, "url");
-
-    if (url_i < 0) {
-        return NULL;
-    }
-
-    int start = json->tokens[url_i].start;
-    int end = json->tokens[url_i].end;
-    return regex_str_slice(json->json_str, start, end);
-}
-
-char* ju_url_next(struct ju_array_iter *self) {
-    return ju_url_from_post_object(self->json, ju_array_next(self));
-}
-
 struct ju_random_iter* ju_random_init(ju_json_t *self, int array_i) {
     struct ju_random_iter *iter = malloc(sizeof(struct ju_random_iter));
 
@@ -196,19 +164,4 @@ int ju_random_next(struct ju_random_iter *self) {
     }
 
     return self->list[self->indices->items[self->index++]];
-}
-
-struct ju_random_iter* ju_random_url_init(ju_json_t *self) {
-    int data_obj_i = ju_object_get(self, 0, "data");
-    int posts_arr_i = ju_object_get(self, data_obj_i, "children");
-
-    if (posts_arr_i < 1) {
-        return NULL;
-    }
-
-    return ju_random_init(self, posts_arr_i);
-}
-
-char* ju_random_url_next(struct ju_random_iter *self) {
-    return ju_url_from_post_object(self->json, ju_random_next(self));
 }

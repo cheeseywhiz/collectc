@@ -62,28 +62,7 @@ void test_random_next(struct ju_random_iter *iter) {
     printf("\nPassed: iterated randomly through array\n");
 }
 
-struct ju_array_iter* test_url_init(ju_json_t *json) {
-    struct ju_array_iter *iter = ju_url_init(json);
-    assert(iter->array_i == 4);
-    printf("Passed: located posts structure array\n");
-    return iter;
-}
-
-void test_url_next(struct ju_array_iter *iter) {
-    char *url;
-    url = ju_url_next(iter);
-    assert(0 == strcmp(url, "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"));
-    free(url);
-    url = ju_url_next(iter);
-    assert(0 == strcmp(url, "https://www.archlinux.org/static/logos/archlinux-logo-dark-90dpi.ebdee92a15b3.png"));
-    free(url);
-    url = ju_url_next(iter);
-    assert(0 == strcmp(url, "https://i.reddituploads.com/d1e77b5c62694624ba7235a57431f070?fit=max&h=1536&w=1536&s=b3103272b2bf369f5c42396b09c4caf8"));
-    free(url);
-    printf("Passed: url iteration\n");
-}
-
-void test_sample_data(void) {
+int ju_test_main(void) {
     ju_json_t *json = test_parse();
     test_object_get(json);
     struct ju_array_iter *iter = test_array_init(json);
@@ -93,19 +72,5 @@ void test_sample_data(void) {
     test_random_next(r_iter);
     ju_random_free(r_iter);
     ju_free(json);
-}
-
-void test_url_data(void) {
-    char *data = "{\"data\": {\"children\": [{\"data\": {\"url\": \"https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png\"}}, {\"data\": {\"url\": \"https://www.archlinux.org/static/logos/archlinux-logo-dark-90dpi.ebdee92a15b3.png\"}}, {\"data\": {\"url\": \"https://i.reddituploads.com/d1e77b5c62694624ba7235a57431f070?fit=max&h=1536&w=1536&s=b3103272b2bf369f5c42396b09c4caf8\"}}]}}";
-    ju_json_t *json = ju_parse(data);
-    struct ju_array_iter *iter = test_url_init(json);
-    test_url_next(iter);
-    ju_free(json);
-    free(iter);
-}
-
-int ju_test_main(void) {
-    test_sample_data();
-    test_url_data();
     return 0;
 }
