@@ -20,10 +20,6 @@ static char* home_dir_user(char *username) {
 }
 
 char* path_expand_user(char *path) {
-    if (path_eq(path, "~")) {
-        return path_home();
-    }
-
     path = strdup(path);
 
     if (!path) {
@@ -32,14 +28,11 @@ char* path_expand_user(char *path) {
 
     char *pattern = "^~([^/]*)";
     char *user = regex_match_one_subexpr(pattern, path, REG_EXTENDED);
+    char *home;
 
     if (!user) {
         return path;
-    }
-
-    char *home;
-
-    if (strlen(user)) {
+    } else if (strlen(user)) {
         home = home_dir_user(user);
     } else {
         home = path_home();
@@ -62,15 +55,15 @@ char* path_expand_user(char *path) {
     }
 
     char *new_path = path_join(home, after_home + 1);
+    free(path);
+    path = new_path;
     free(after_home);
     free(home);
 
-    if (!new_path) {
+    if (!path) {
         goto fail;
     }
 
-    free(path);
-    path = new_path;
     goto cleanup;
 
 fail:
@@ -82,7 +75,7 @@ cleanup:
     return path;
 }
 
-static char* trim_trailing_slash(char *path) {
+static char* trim_path_ends(char *path) {
     path = strdup(path);
 
     if (!path) {
@@ -92,33 +85,21 @@ static char* trim_trailing_slash(char *path) {
     if (!path_eq(path, "/") && regex_ends_with(path, "/")) {
         char *new_path = regex_str_slice(path, 0, strlen(path) - 1);
         free(path);
+        path = new_path;
 
-        if (!new_path) {
+        if (!path) {
             return NULL;
         }
-
-        path = new_path;
-    }
-
-    return path;
-}
-
-static char* trim_initial_point_slash(char *path) {
-    path = strdup(path);
-
-    if (!path) {
-        return NULL;
     }
 
     if (regex_starts_with(path, "./")) {
         char *new_path = regex_str_slice(path, 2, strlen(path));
         free(path);
+        path = new_path;
 
-        if (!new_path) {
+        if (!path) {
             return NULL;
         }
-
-        path = new_path;
     }
 
     return path;
@@ -134,28 +115,21 @@ char* path_norm(char *path) {
 
     new_path = path_expand_user(path);
     free(path);
-
-    if (!new_path) {
-        return NULL;
-    }
-
     path = new_path;
-    new_path = trim_trailing_slash(path);
-    free(path);
 
-    if (!new_path) {
+    if (!path) {
         return NULL;
     }
 
+    new_path = trim_path_ends(path);
+    free(path);
     path = new_path;
-    new_path = trim_initial_point_slash(path);
-    free(path);
 
-    if (!new_path) {
+    if (!path) {
         return NULL;
     }
 
-    return new_path;
+    return path;
 }
 
 char* path_home(void) {
@@ -167,7 +141,7 @@ char* path_home(void) {
     } else {
         path = getenv("HOME");
 
-        if (path == NULL) {
+        if (!path) {
             return NULL;
         }
     }

@@ -4,10 +4,13 @@
 #include "path.h"
 
 void test_path_norm(void) {
-    int n_cases = 6;
+    int n_cases = 10;
     char *cases[] = {
         "~",
+        "~/dir/file",
         "~http",
+        "~unknownuser",
+        "~unknownuser/dir/file",
         "~root/file",
         "./",
         ".",
