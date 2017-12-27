@@ -119,57 +119,22 @@ int ju_array_next(struct ju_array_iter *self) {
     return -1;
 }
 
-struct ju_random_iter* ju_random_init(ju_json_t *self, int array_i) {
-    struct ju_random_iter *iter = malloc(sizeof(struct ju_random_iter));
-
-    if (!iter) {
-        return NULL;
-    }
-
+rp_t* ju_array_rp(ju_json_t *self, int array_i) {
     struct ju_array_iter *array_iter = ju_array_init(self, array_i);
 
     if (!array_iter) {
         return NULL;
     }
 
-    iter->list = malloc(sizeof(int) * array_iter->size);
-
-    if (!iter->list) {
-        return NULL;
-    }
-
     int json_i;
-    int length = 0;
+    rp_t *popper = NULL;
 
     for (json_i = ju_array_next(array_iter); json_i > 0; json_i = ju_array_next(array_iter)) {
-        iter->list[length++] = json_i;
+        if (!rp_append(&popper, json_i)) {
+            break;
+        }
     }
 
     free(array_iter);
-    iter->json = self;
-    iter->popper = rp_init(length);
-
-    if (!iter->popper) {
-        free(iter->list);
-        free(iter);
-        return NULL;
-    }
-
-    return iter;
-}
-
-void ju_random_free(struct ju_random_iter *self) {
-    rp_free(&self->popper);
-    free(self->list);
-    free(self);
-}
-
-int ju_random_next(struct ju_random_iter *self) {
-    int next = rp_pop_random(&self->popper);
-
-    if (next < 0) {
-        return next;
-    }
-
-    return self->list[next];
+    return popper;
 }

@@ -6,7 +6,7 @@
 #include "get.h"
 #include "reg.h"
 
-#define UA_PREFIX "collectc/"
+#define UA_PREFIX "collectc"
 
 void free_response(struct response *self) {
     free(self->type);
@@ -65,9 +65,8 @@ struct response* get_response(char *url) {
         exit = 1;
         goto cleanup1;
     } else {
-        char user_agent[strlen(UA_PREFIX) + strlen(VERSION) + 1];
-        strcpy(user_agent, UA_PREFIX);
-        strcat(user_agent, VERSION);
+        char user_agent[strlen(UA_PREFIX) + 1 + strlen(VERSION) + 1];
+        sprintf(user_agent, "%s/%s", UA_PREFIX, VERSION);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
     };
 

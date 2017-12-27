@@ -112,28 +112,27 @@ static struct raw_base_listing* new_base_listing(char *url) {
         return NULL;
     }
 
-    struct ju_random_iter *iter = ju_random_init(self->json, posts_arr_i);
+    self->popper = ju_array_rp(self->json, posts_arr_i);
 
-    if (!iter) {
+    if (!self->popper) {
         ju_free(json);
         free_response(self->re);
         free(self);
         return NULL;
     }
 
-    self->iter = iter;
     return self;
 }
 
 static void free_base_listing(struct raw_base_listing *self) {
-    ju_random_free(self->iter);
+    rp_free(&self->popper);
     ju_free(self->json);
     free_response(self->re);
     free(self);
 }
 
 static int base_listing_next(struct raw_base_listing *self) {
-    int iter_next = ju_random_next(self->iter);
+    int iter_next = rp_pop_random(&self->popper);
 
     if (iter_next < 0) {
         return iter_next;

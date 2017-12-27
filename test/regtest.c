@@ -198,13 +198,13 @@ struct score sc;
 
 int regex_test_main(void) {
     printf("regex_starts_with():\n");
-    REPORT(test_starts_with());
+    REPORT(test_starts_with())
     printf("regex_ends_with():\n");
-    REPORT(test_ends_with());
+    REPORT(test_ends_with())
     printf("regex_match_one_subexpr():\n");
-    REPORT(test_match_one_subexpr());
+    REPORT(test_match_one_subexpr())
     printf("regex_contains():\n");
-    REPORT(test_contains());
+    REPORT(test_contains())
     printf("regex_str_slice():\n");
     REPORT(test_str_slice())
     printf("regex_url_fname():\n");

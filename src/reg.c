@@ -80,7 +80,7 @@ int regex_starts_with(char *haystack, char *needle) {
     size_t ned_len = strlen(needle);
     size_t hay_len = strlen(haystack);
 
-    for (size_t i = 0; i < strlen(needle); i++) {
+    for (size_t i = 0; i < ned_len; i++) {
         if ((i >= ned_len) || (i >= hay_len) || (haystack[i] != needle[i])) {
             return 0;
         }

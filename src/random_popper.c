@@ -95,8 +95,7 @@ size_t rp_len(rp_t **self) {
     }
 
     size_t i = 0;
-    rp_t *item;
-    for (item = *self; item; item = item->next) i++;
+    for (rp_t *item = *self; item; item = item->next) i++;
     return i;
 }
 
@@ -118,12 +117,15 @@ int rp_pop_index(rp_t **self, size_t index) {
         before->next = item->next;
     }
 
+    int num;
+
     if (!item) {
-        return -1;
+        num = -1;
+    } else {
+        num = item->num;
+        free(item);
     }
 
-    int num = item->num;
-    free(item);
     return num;
 }
 

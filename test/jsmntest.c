@@ -5,6 +5,7 @@
 
 #include "jsmnutils.h"
 #include "reg.h"
+#include "random_popper.h"
 
 ju_json_t* test_parse(void) {
     char *data = "{\"object\": {\"key1\": \"value2\"}, \"array\": [\"value3\", \"value4\", \"value5\", \"value6\"], \"key2\": \"value7\"}";
@@ -45,21 +46,14 @@ void test_array_next(struct ju_array_iter *iter) {
     printf("Passed: iterated through json arrays and objects\n");
 }
 
-struct ju_random_iter* test_random_init(ju_json_t *json) {
-    struct ju_random_iter *iter = ju_random_init(json, 6);
-    assert(iter->list[0] == 7);
-    assert(iter->list[1] == 8);
-    assert(iter->list[2] == 9);
-    assert(iter->list[3] == 10);
-    printf("Passed: made sequence from array iterator\n");
-    return iter;
-}
-
-void test_random_next(struct ju_random_iter *iter) {
-    int i;
-    printf("Random order: ");
-    for (i = ju_random_next(iter); i > 0; i = ju_random_next(iter)) printf("%d ", i);
-    printf("\nPassed: iterated randomly through array\n");
+void test_array_rp(ju_json_t *json) {
+    rp_t *popper = ju_array_rp(json, 6);
+    assert(rp_get_index(&popper, 0)->num == 7);
+    assert(rp_get_index(&popper, 1)->num == 8);
+    assert(rp_get_index(&popper, 2)->num == 9);
+    assert(rp_get_index(&popper, 3)->num == 10);
+    printf("Passed: made sequence from JSON array\n");
+    rp_free(&popper);
 }
 
 int ju_test_main(void) {
@@ -68,9 +62,7 @@ int ju_test_main(void) {
     struct ju_array_iter *iter = test_array_init(json);
     test_array_next(iter);
     free(iter);
-    struct ju_random_iter *r_iter = test_random_init(json);
-    test_random_next(r_iter);
-    ju_random_free(r_iter);
+    test_array_rp(json);
     ju_free(json);
     return 0;
 }

@@ -3,6 +3,7 @@
 
 #include "jsmnutils.h"
 #include "get.h"
+#include "random_popper.h"
 
 enum raw_flags {
     FAIL = 0,
@@ -23,7 +24,7 @@ int raw_post_download(struct raw_post *self);
 
 struct raw_base_listing {
     ju_json_t *json;
-    struct ju_random_iter *iter;
+    rp_t *popper;
     struct response *re;
 };
 

@@ -4,8 +4,8 @@
 #include "random_popper.h"
 
 int rp_test_main(void) {
-    printf("rp_init(20):\n");
-    rp_t *element, *popper = rp_init(20);
+    printf("rp_init(10):\n");
+    rp_t *element, *popper = rp_init(10);
 
     for (element = popper; element; element = element->next) {
         printf("%d\n", element->num);
@@ -18,5 +18,18 @@ int rp_test_main(void) {
         printf("%d\t%d\n", j++, i);
     }
 
-    return 0;
+    printf("second iteration should be empty:\n");
+
+    for (element = popper; element; element = element->next) {
+        printf("%d\n", element->num);
+    }
+
+    if (!popper) {
+        printf("popper is NULL- check\n");
+        return 0;
+    } else {
+        printf("popper should be NULL after popping all\n");
+        rp_free(&popper);
+        return 1;
+    }
 }
