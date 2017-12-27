@@ -41,7 +41,7 @@ deps: jsmn
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o
+OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o $(OBJ)/random_popper.o
 
 $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
 	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
@@ -56,7 +56,7 @@ $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
 $(OBJ)/%.o: $(TEST)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-TEST_OBJS:=$(OBJ)/jsmntest.o $(OBJ)/pathtest.o $(OBJ)/randtest.o $(OBJ)/regtest.o
+TEST_OBJS:=$(OBJ)/jsmntest.o $(OBJ)/pathtest.o $(OBJ)/randtest.o $(OBJ)/regtest.o $(OBJ)/random_popper_test.o
 
 testflags:
 	$(eval CFLAGS+=-Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD))
@@ -73,9 +73,15 @@ testdeps:
 	cd $(LIB)/jsmn && $(MAKE) test
 
 test: $(BUILD)/test
-	LD_LIBRARY_PATH=$(BUILD) $(TEST_CMD)
+	$(TEST_CMD)
+
+travisrun: deps all test
+	$(BUILD)/collect
+
+travis: clean
+	$(MAKE) travisrun 2>&1 | tee $(PWD)/build.log
 
 $(PWD)/%:
 	mkdir -p $@
 
-.PHONY: clean jsmn deps testdeps all objects testflags test
+.PHONY: clean jsmn deps testdeps all objects testflags test travisrun travis

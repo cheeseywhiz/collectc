@@ -11,7 +11,5 @@ typedef struct {
 } int_list;
 
 int randbelow(int);
-int_list* int_list_random_order(int);
-void free_int_list(int_list*);
 
 #endif

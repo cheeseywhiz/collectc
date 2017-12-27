@@ -2,7 +2,7 @@
 #define JSON_H
 
 #include "jsmn.h"
-#include "rand.h"
+#include "random_popper.h"
 
 typedef struct {
     char *json_str;
@@ -34,8 +34,7 @@ int ju_array_next(struct ju_array_iter*);
 struct ju_random_iter {
     ju_json_t *json;
     int *list;
-    int_list *indices;
-    int index;
+    rp_t *popper;
 };
 
 struct ju_random_iter* ju_random_init(ju_json_t*, int);

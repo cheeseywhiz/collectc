@@ -4,7 +4,7 @@
 #include "jsmn.h"
 #include "jsmnutils.h"
 #include "reg.h"
-#include "rand.h"
+#include "random_popper.h"
 
 ju_json_t* ju_parse(char *json_str) {
     ju_json_t *self = malloc(sizeof(ju_json_t));
@@ -145,23 +145,31 @@ struct ju_random_iter* ju_random_init(ju_json_t *self, int array_i) {
         iter->list[length++] = json_i;
     }
 
-    iter->json = self;
-    iter->indices = int_list_random_order(length);
-    iter->index = 0;
     free(array_iter);
+    iter->json = self;
+    iter->popper = rp_init(length);
+
+    if (!iter->popper) {
+        free(iter->list);
+        free(iter);
+        return NULL;
+    }
+
     return iter;
 }
 
 void ju_random_free(struct ju_random_iter *self) {
-    free_int_list(self->indices);
+    rp_free(&self->popper);
     free(self->list);
     free(self);
 }
 
 int ju_random_next(struct ju_random_iter *self) {
-    if (self->index >= self->indices->length) {
-        return -1;
+    int next = rp_pop_random(&self->popper);
+
+    if (next < 0) {
+        return next;
     }
 
-    return self->list[self->indices->items[self->index++]];
+    return self->list[next];
 }
