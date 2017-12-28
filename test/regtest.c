@@ -2,12 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
-#include "reg.h"
 
-struct score {
-    int passing;
-    int failing;
-};
+#include "reg.h"
+#include "test.h"
 
 struct case_starts_with {
     char *haystack;
@@ -15,10 +12,10 @@ struct case_starts_with {
     int expected;
 };
 
-struct score test_starts_with(void) {
-    struct score score_starts_with = {0, 0};
+static struct score test_starts_with(void) {
+    SCORE_INIT();
     int n_cases = 4;
-    struct case_starts_with cases[4] = {
+    struct case_starts_with cases[] = {
         {"apple", "apple", 1},
         {"apple", "orange", 0},
         {"apple", "apples", 0},
@@ -28,18 +25,14 @@ struct score test_starts_with(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_starts_with case_ = cases[i];
         int actual = regex_starts_with(case_.haystack, case_.needle);
-        if (actual == case_.expected) {
-            score_starts_with.passing++;
-        } else {
-            score_starts_with.failing++;
-        }
+        ASSERT(actual == case_.expected);
     }
 
-    return score_starts_with;
+    RETURN_SCORE();
 }
 
-struct score test_ends_with(void) {
-    struct score score_ends_with = {0, 0};
+static struct score test_ends_with(void) {
+    SCORE_INIT();
     int n_cases = 5;
     struct case_starts_with cases[] = {
         {"apple", "apple", 1},
@@ -52,15 +45,10 @@ struct score test_ends_with(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_starts_with case_ = cases[i];
         int actual = regex_ends_with(case_.haystack, case_.needle);
-
-        if (actual == case_.expected) {
-            score_ends_with.passing++;
-        } else {
-            score_ends_with.failing++;
-        }
+        ASSERT(actual == case_.expected);
     }
 
-    return score_ends_with;
+    RETURN_SCORE();
 }
 
 struct case_match_one_subexpr {
@@ -68,11 +56,11 @@ struct case_match_one_subexpr {
     char *expected;
 };
 
-struct score test_match_one_subexpr(void) {
-    struct score score_match_one_subexpr = {0, 0};
+static struct score test_match_one_subexpr(void) {
+    SCORE_INIT();
     int n_cases = 4;
     char *pattern = "\\([0-9]{3}\\)-[0-9]{3}-([0-9]{4})";
-    struct case_match_one_subexpr cases[4] = {
+    struct case_match_one_subexpr cases[] = {
         {"(012)-128-1361", "1361"},
         {"(459)-103-1916", "1916"},
         {"(715)-181-1174", "1174"},
@@ -82,17 +70,11 @@ struct score test_match_one_subexpr(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_match_one_subexpr case_ = cases[i];
         char *actual = regex_match_one_subexpr(pattern, case_.haystack, REG_EXTENDED);
-
-        if (strcmp(actual, case_.expected) == 0) {
-            score_match_one_subexpr.passing++;
-        } else {
-            score_match_one_subexpr.failing++;
-        }
-
+        ASSERT(strcmp(actual, case_.expected) == 0);
         free(actual);
     }
 
-    return score_match_one_subexpr;
+    RETURN_SCORE();
 }
 
 struct case_contains {
@@ -101,8 +83,8 @@ struct case_contains {
     int expected;
 };
 
-struct score test_contains(void) {
-    struct score score_contains = {0, 0};
+static struct score test_contains(void) {
+    SCORE_INIT();
     int n_cases = 5;
     struct case_contains cases[] = {
         {"removed", "http://i.imgur.com/removed.jpg", 1},
@@ -115,15 +97,10 @@ struct score test_contains(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_contains case_ = cases[i];
         int actual = regex_contains(case_.needle, case_.haystack);
-
-        if (actual == case_.expected) {
-            score_contains.passing++;
-        } else {
-            score_contains.failing++;
-        }
+        ASSERT(actual == case_.expected);
     }
 
-    return score_contains;
+    RETURN_SCORE();
 }
 
 struct case_str_slice {
@@ -132,11 +109,11 @@ struct case_str_slice {
     char *expected;
 };
 
-struct score test_str_slice(void) {
-    struct score score_str_slice = {0, 0};
+static struct score test_str_slice(void) {
+    SCORE_INIT();
     int n_cases = 7;
     char *string = "hello world";
-    struct case_str_slice cases[7] = {
+    struct case_str_slice cases[] = {
         {6, 5, NULL},
         {-1, 5, NULL},
         {11, 12, NULL},
@@ -149,18 +126,19 @@ struct score test_str_slice(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_str_slice case_ = cases[i];
         char *actual = regex_str_slice(string, case_.start, case_.end);
+        int cmp_eq = 0;
 
-        if (case_.expected == NULL && actual == NULL) {
-            score_str_slice.passing++;
-        } else if (strcmp(case_.expected, actual) == 0) {
+        if (actual) {
+            cmp_eq = strcmp(case_.expected, actual) == 0;
             free(actual);
-            score_str_slice.passing++;
-        } else {
-            score_str_slice.failing++;
+        } else if (!case_.expected) {
+            cmp_eq = 1;
         }
+
+        ASSERT(cmp_eq);
     }
 
-    return score_str_slice;
+    RETURN_SCORE();
 }
 
 struct case_url_fname {
@@ -168,10 +146,10 @@ struct case_url_fname {
     char *expected;
 };
 
-struct score test_url_fname(void) {
-    struct score score_url_fname = {0, 0};
+static struct score test_url_fname(void) {
+    SCORE_INIT();
     int n_cases = 4;
-    struct case_url_fname cases[4] = {
+    struct case_url_fname cases[] = {
         {"http://www.google.com/image.jpg", "image.jpg"},
         {"https://www.reddit.com/r/all/whatever.png", "whatever.png"},
         {"ftp://i.imgur.com/dir1/dir2/dir3/abc123?query", "abc123"},
@@ -181,33 +159,25 @@ struct score test_url_fname(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_url_fname case_ = cases[i];
         char *actual = regex_url_fname(case_.url);
+        int cmp_eq = strcmp(case_.expected, actual) == 0;
 
-        if (strcmp(case_.expected, actual) == 0) {
+        if (actual) {
             free(actual);
-            score_url_fname.passing++;
-        } else {
-            score_url_fname.failing++;
         }
+
+        ASSERT(cmp_eq);
     }
 
-    return score_url_fname;
+    RETURN_SCORE();
 }
 
-struct score sc;
-#define REPORT(score) sc = score; printf("Passing: %d\nFailing: %d\n", sc.passing, sc.failing);
-
-int regex_test_main(void) {
-    printf("regex_starts_with():\n");
-    REPORT(test_starts_with())
-    printf("regex_ends_with():\n");
-    REPORT(test_ends_with())
-    printf("regex_match_one_subexpr():\n");
-    REPORT(test_match_one_subexpr())
-    printf("regex_contains():\n");
-    REPORT(test_contains())
-    printf("regex_str_slice():\n");
-    REPORT(test_str_slice())
-    printf("regex_url_fname():\n");
-    REPORT(test_url_fname())
-    return 0;
+struct score regex_test_main(void) {
+    MODULE_INIT();
+    FUNCTION_REPORT("regex_starts_with()", test_starts_with());
+    FUNCTION_REPORT("regex_ends_with()", test_ends_with());
+    FUNCTION_REPORT("regex_match_one_subexpr()", test_match_one_subexpr());
+    FUNCTION_REPORT("regex_contains()", test_contains());
+    FUNCTION_REPORT("regex_str_slice()", test_str_slice());
+    FUNCTION_REPORT("regex_url_fname()", test_url_fname());
+    MODULE_EXIT();
 }

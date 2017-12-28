@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <regex.h>
+#include <limits.h>
 
 #include "path.h"
 #include "reg.h"
@@ -148,6 +149,17 @@ char* path_home(void) {
     return strdup(path);
 }
 
+char* path_cwd(void) {
+#ifdef _GNU_SOURCE
+    return get_current_dir_name();
+#else
+    size_t size = 1024;
+    char buf[size + 1];
+    getcwd(buf, size);
+    return strdup(buf);
+#endif /* _GNU_SOURCE */
+}
+
 /* TODO: varargs variant (self, other, other, other) */
 char* path_join(char *path, char *other) {
     if (path_is_abs(other)) {
@@ -188,11 +200,27 @@ int path_eq(char *path, char *other) {
 
 int path_exists(char *path) {
     struct stat st;
-    return stat(path, &st) == 0;
+    char *norm = path_norm(path);
+
+    if (!norm) {
+        return 0;
+    }
+
+    int exists = stat(norm, &st) == 0;
+    free(norm);
+    return exists;
 }
 
 int path_is_abs(char *path) {
-    return regex_starts_with(path, "/");
+    char *norm = path_norm(path);
+
+    if (!norm) {
+        return 0;
+    }
+
+    int is_abs = regex_starts_with(norm, "/");
+    free(norm);
+    return is_abs;
 }
 
 int path_open_write(char *path) {
@@ -207,6 +235,12 @@ int path_mkdir(char *path, int mode, int exists_ok) {
     } else {
         return mkdir(path, mode);
     }
+}
+
+char* path_mktempd(void) {
+    char template[PATH_MAX] = "/tmp/collectc.XXXXXX";
+    char *tmp = strdup(mkdtemp(template));
+    return tmp;
 }
 
 char* path_url_fname(char *path, char *url) {

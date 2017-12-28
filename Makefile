@@ -5,7 +5,7 @@ TEST:=$(PWD)/test
 BUILD:=$(PWD)/build
 OBJ:=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native -D_GNU_SOURCE
 
 ifeq ($(DEBUG),1)
 	CFLAGS+=-O3 -g3
@@ -66,14 +66,14 @@ $(BUILD)/libtest.so: $(OBJ) testflags $(TEST_OBJS) $(BUILD)
 	$(eval LDFLAGS+=-L$(TEST))
 	$(eval LDLIBS+=-ltest)
 
-$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
+$(BUILD)/test: $(TEST)/main.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
 testdeps:
 	cd $(LIB)/jsmn && $(MAKE) test
 
 test: $(BUILD)/test
-	$(TEST_CMD)
+	-$(TEST_CMD)
 
 travisrun: deps all test
 	$(BUILD)/collect

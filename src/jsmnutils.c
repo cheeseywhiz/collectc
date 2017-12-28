@@ -130,7 +130,7 @@ rp_t* ju_array_rp(ju_json_t *self, int array_i) {
     rp_t *popper = NULL;
 
     for (json_i = ju_array_next(array_iter); json_i > 0; json_i = ju_array_next(array_iter)) {
-        if (!rp_append(&popper, json_i)) {
+        if (!rp_append(&popper, new_int(json_i))) {
             break;
         }
     }

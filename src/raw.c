@@ -125,20 +125,22 @@ static struct raw_base_listing* new_base_listing(char *url) {
 }
 
 static void free_base_listing(struct raw_base_listing *self) {
-    rp_free(&self->popper);
+    rp_deep_free(&self->popper);
     ju_free(self->json);
     free_response(self->re);
     free(self);
 }
 
 static int base_listing_next(struct raw_base_listing *self) {
-    int iter_next = rp_pop_random(&self->popper);
+    int *iter_next = rp_pop_random(&self->popper);
 
-    if (iter_next < 0) {
-        return iter_next;
+    if (!iter_next) {
+        return -1;
     }
 
-    return ju_object_get(self->json, iter_next, "data");
+    int next_item = ju_object_get(self->json, *iter_next, "data");
+    free(iter_next);
+    return next_item;
 }
 
 raw_listing* raw_new_listing(char *path, char *url) {

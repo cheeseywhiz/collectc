@@ -5,6 +5,7 @@
 
 #include "reg.h"
 
+#ifndef _GNU_SOURCE
 char* strdup(char *str) {
     char *new = calloc(strlen(str) + 1, 1);
 
@@ -15,6 +16,7 @@ char* strdup(char *str) {
     strcpy(new, str);
     return new;
 }
+#endif /* _GNU_SOURCE */
 
 char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     char *needle;

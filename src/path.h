@@ -6,6 +6,7 @@
 
 char* path_norm(char *path);
 char* path_home(void);
+char* path_cwd(void);
 char* path_join(char *path, char *other);
 int path_eq(char *path, char *other);
 int path_exists(char *path);
@@ -16,6 +17,7 @@ int path_open_write(char *path);
 #define EXISTS_OK_DEF 1
 
 int path_mkdir(char *path, int mode, int exists_ok);
+char* path_mktempd(void);
 char* path_url_fname(char *path, char *url);
 
 #endif

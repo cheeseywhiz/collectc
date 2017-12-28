@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,63 +5,73 @@
 #include "jsmnutils.h"
 #include "reg.h"
 #include "random_popper.h"
+#include "test.h"
 
-ju_json_t* test_parse(void) {
+SSSCORE test_parse(ju_json_t *json) {
+    SCORE_INIT();
+    ASSERT(json->n_tokens == 13);
+    RETURN_SCORE();
+}
+
+SSSCORE test_object_get(ju_json_t *json) {
+    SCORE_INIT();
+    int sub_object = ju_object_get(json, 0, "object");
+    ASSERT(sub_object == 2);
+    int value2tok = ju_object_get(json, sub_object, "key1");
+    ASSERT(value2tok == 4);
+    char *value2str = regex_str_slice(json->json_str, json->tokens[value2tok].start, json->tokens[value2tok].end);
+    ASSERT(strcmp("value2", value2str) == 0);
+    free(value2str);
+    RETURN_SCORE();
+}
+
+SSSCORE test_array_init(struct ju_array_iter *iter) {
+    SCORE_INIT();
+    ASSERT(iter->size == 3);
+    RETURN_SCORE();
+}
+
+SSSCORE test_array_next(struct ju_array_iter *iter) {
+    SCORE_INIT();
+    int expected_values[] = {1, 5, 11};
+    int actual, i = 0;
+
+    for (actual = ju_array_next(iter); actual >= 0; actual = ju_array_next(iter)) {
+        ASSERT(actual == expected_values[i++]);
+    }
+
+    RETURN_SCORE();
+}
+
+SSSCORE test_array_rp(ju_json_t *json) {
+    SCORE_INIT();
+    int expected_values[] = {7, 8, 9, 10};
+    rp_t *popper = ju_array_rp(json, 6);
+    rp_t *index;
+    int i = 0;
+    int *actual;
+
+    for (index = popper; index; index = index->next) {
+        int expected = expected_values[i++];
+        actual = index->data;
+        ASSERT(expected == *actual);
+    }
+
+    rp_deep_free(&popper);
+    RETURN_SCORE();
+}
+
+struct score ju_test_main(void) {
+    MODULE_INIT();
     char *data = "{\"object\": {\"key1\": \"value2\"}, \"array\": [\"value3\", \"value4\", \"value5\", \"value6\"], \"key2\": \"value7\"}";
     ju_json_t *json = ju_parse(data);
-    assert(json->n_tokens == 13);
-    printf("Passed: parsed json data\n");
-    return json;
-}
-
-void test_object_get(ju_json_t *json) {
-    int sub_object = ju_object_get(json, 0, "object");
-    assert(sub_object == 2);
-    int value2tok = ju_object_get(json, sub_object, "key1");
-    assert(value2tok == 4);
-    char *value2str = regex_str_slice(json->json_str, json->tokens[value2tok].start, json->tokens[value2tok].end);
-    assert(strcmp("value2", value2str) == 0);
-    free(value2str);
-    printf("Passed: manipulated json data\n");
-}
-
-struct ju_array_iter* test_array_init(ju_json_t *json) {
+    FUNCTION_REPORT("ju_parse()", test_parse(json));
+    FUNCTION_REPORT("ju_object_get()", test_object_get(json));
+    FUNCTION_REPORT("ju_array_rp()", test_array_rp(json));
     struct ju_array_iter *iter = ju_array_init(json, 0);
-    assert(iter->size == 3);
-    printf("Passed: created json iterartor\n");
-    return iter;
-}
-
-void test_array_next(struct ju_array_iter *iter) {
-    int index;
-    index = ju_array_next(iter);
-    assert(index == 1);
-    index = ju_array_next(iter);
-    assert(index == 5);
-    index = ju_array_next(iter);
-    assert(index == 11);
-    index = ju_array_next(iter);
-    assert(index < 0);
-    printf("Passed: iterated through json arrays and objects\n");
-}
-
-void test_array_rp(ju_json_t *json) {
-    rp_t *popper = ju_array_rp(json, 6);
-    assert(rp_get_index(&popper, 0)->num == 7);
-    assert(rp_get_index(&popper, 1)->num == 8);
-    assert(rp_get_index(&popper, 2)->num == 9);
-    assert(rp_get_index(&popper, 3)->num == 10);
-    printf("Passed: made sequence from JSON array\n");
-    rp_free(&popper);
-}
-
-int ju_test_main(void) {
-    ju_json_t *json = test_parse();
-    test_object_get(json);
-    struct ju_array_iter *iter = test_array_init(json);
-    test_array_next(iter);
+    FUNCTION_REPORT("ju_array_init()", test_array_init(iter));
+    FUNCTION_REPORT("ju_array_next()", test_array_next(iter));
     free(iter);
-    test_array_rp(json);
     ju_free(json);
-    return 0;
+    MODULE_EXIT();
 }

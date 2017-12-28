@@ -1,10 +1,25 @@
 #include <stdio.h>
-#include <assert.h>
-#include "rand.h"
 
-int rand_test_main(void) {
-    printf("randbelow(10) test:\n");
-    for (int j = 0; j < 26; j++) printf("%d, ", randbelow(10));
-    printf("\nPassed: random numbers below n generator\n");
-    return 0;
+#include "rand.h"
+#include "test.h"
+
+static struct score test_randbelow(int n, int below) {
+    SCORE_INIT();
+    printf("[");
+    int rand;
+
+    for (int i = 0; i < n; i++) {
+        rand = randbelow(below);
+        ASSERT(0 <= rand && rand < below);
+        printf("%d, ", rand);
+    }
+
+    printf("]\n");
+    RETURN_SCORE();
+}
+
+struct score rand_test_main(void) {
+    MODULE_INIT();
+    FUNCTION_REPORT("randbelow()", test_randbelow(25, 10));
+    MODULE_EXIT();
 }

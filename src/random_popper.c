@@ -3,24 +3,35 @@
 #include "random_popper.h"
 #include "rand.h"
 
-rp_t* rp_new(int num) {
+rp_t* rp_new(void *data) {
     rp_t *self = malloc(sizeof(rp_t));
 
     if (!self) {
         return NULL;
     }
 
-    self->num = num;
+    self->data = data;
     self->next = NULL;
     return self;
 }
 
-void rp_free(rp_t **self) {
+void rp_shallow_free(rp_t **self) {
     rp_t *item, *item_alias;
 
     for (item = *self; item;) {
         item_alias = item;
         item = item->next;
+        free(item_alias);
+    }
+}
+
+void rp_deep_free(rp_t **self) {
+    rp_t *item, *item_alias;
+
+    for (item = *self; item;) {
+        item_alias = item;
+        item = item->next;
+        free(item_alias->data);
         free(item_alias);
     }
 }
@@ -53,8 +64,8 @@ rp_t* rp_last(rp_t **self) {
     }
 }
 
-rp_t* rp_append(rp_t **self, int num) {
-    rp_t *new = rp_new(num);
+rp_t* rp_append(rp_t **self, void *data) {
+    rp_t *new = rp_new(data);
 
     if (!new) {
         return NULL;
@@ -99,7 +110,7 @@ size_t rp_len(rp_t **self) {
     return i;
 }
 
-int rp_pop_index(rp_t **self, size_t index) {
+void* rp_pop_index(rp_t **self, size_t index) {
     rp_t *item;
     size_t self_len = rp_len(self);
 
@@ -117,31 +128,30 @@ int rp_pop_index(rp_t **self, size_t index) {
         before->next = item->next;
     }
 
-    int num;
+    void *data;
 
     if (!item) {
-        num = -1;
+        data = NULL;
     } else {
-        num = item->num;
+        data = item->data;
         free(item);
     }
 
-    return num;
+    return data;
 }
 
-int rp_pop_random(rp_t **self) {
+void* rp_pop_random(rp_t **self) {
+    srand(urandom_number());
     return rp_pop_index(self, randbelow(rp_len(self)));
 }
 
-rp_t* rp_init(int length) {
-    srand(urandom_number());
-    rp_t *self = NULL;
+int* new_int(int value) {
+    int *new = malloc(sizeof(int));
 
-    for (int i = 0; i < length; i++) {
-        if (!rp_append(&self, i)) {
-            break;
-        }
+    if (!new) {
+        return NULL;
     }
 
-    return self;
+    *new = value;
+    return new;
 }
