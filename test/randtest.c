@@ -3,7 +3,7 @@
 #include "rand.h"
 #include "test.h"
 
-static struct score test_randbelow(int n, int below) {
+SSSCORE test_randbelow(int n, int below) {
     SCORE_INIT();
     printf("[");
     int rand;

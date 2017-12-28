@@ -12,7 +12,7 @@ struct case_starts_with {
     int expected;
 };
 
-static struct score test_starts_with(void) {
+SSSCORE test_starts_with(void) {
     SCORE_INIT();
     int n_cases = 4;
     struct case_starts_with cases[] = {
@@ -31,7 +31,7 @@ static struct score test_starts_with(void) {
     RETURN_SCORE();
 }
 
-static struct score test_ends_with(void) {
+SSSCORE test_ends_with(void) {
     SCORE_INIT();
     int n_cases = 5;
     struct case_starts_with cases[] = {
@@ -56,7 +56,7 @@ struct case_match_one_subexpr {
     char *expected;
 };
 
-static struct score test_match_one_subexpr(void) {
+SSSCORE test_match_one_subexpr(void) {
     SCORE_INIT();
     int n_cases = 4;
     char *pattern = "\\([0-9]{3}\\)-[0-9]{3}-([0-9]{4})";
@@ -78,25 +78,25 @@ static struct score test_match_one_subexpr(void) {
 }
 
 struct case_contains {
-    char *needle;
     char *haystack;
+    char *needle;
     int expected;
 };
 
-static struct score test_contains(void) {
+SSSCORE test_contains(void) {
     SCORE_INIT();
     int n_cases = 5;
     struct case_contains cases[] = {
-        {"removed", "http://i.imgur.com/removed.jpg", 1},
-        {"image", "image/png", 1},
-        {"apple", "orange", 0},
-        {"house", "tree", 0},
-        {"tree", "treehouse", 1}
+        {"http://i.imgur.com/removed.jpg", "removed", 1},
+        {"image/png", "image", 1},
+        {"orange", "apple", 0},
+        {"tree", "house", 0},
+        {"treehouse", "tree", 1},
     };
 
     for (int i = 0; i < n_cases; i++) {
         struct case_contains case_ = cases[i];
-        int actual = regex_contains(case_.needle, case_.haystack);
+        int actual = regex_contains(case_.haystack, case_.needle);
         ASSERT(actual == case_.expected);
     }
 
@@ -109,7 +109,7 @@ struct case_str_slice {
     char *expected;
 };
 
-static struct score test_str_slice(void) {
+SSSCORE test_str_slice(void) {
     SCORE_INIT();
     int n_cases = 7;
     char *string = "hello world";
@@ -146,7 +146,7 @@ struct case_url_fname {
     char *expected;
 };
 
-static struct score test_url_fname(void) {
+SSSCORE test_url_fname(void) {
     SCORE_INIT();
     int n_cases = 4;
     struct case_url_fname cases[] = {

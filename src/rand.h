@@ -10,6 +10,6 @@ typedef struct {
     int length;
 } int_list;
 
-int randbelow(int);
+int randbelow(int n);
 
 #endif

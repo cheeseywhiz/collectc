@@ -148,15 +148,15 @@ cleanup1:
 static int verify_image(struct response *re) {
     char *error_msg = "";
 
-    if (regex_contains("removed", re->url)) {
+    if (regex_contains(re->url, "removed")) {
         error_msg = "Appears to be removed";
     }
 
-    if (!regex_contains("image", re->type)) {
+    if (!regex_contains(re->type, "image")) {
         error_msg = "Not an image";
     }
 
-    if (regex_contains("gif", re->type)) {
+    if (regex_contains(re->type, "gif")) {
         error_msg = "Is a .gif";
     }
 

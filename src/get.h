@@ -10,10 +10,10 @@ struct response {
     char *url;
 };
 
-void free_response(struct response*);
+void free_response(struct response *self);
 
 /* Abstraction for curl performance */
-struct response* get_response(char*);
+struct response* get_response(char *url);
 struct response* get_image(char *url);
 
 #endif /* GET_H */

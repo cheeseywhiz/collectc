@@ -41,7 +41,7 @@ cleanup:
     return needle;
 }
 
-int regex_contains(char *needle, char *haystack) {
+int regex_contains(char *haystack, char *needle) {
     size_t needle_len = strlen(needle);
     ssize_t pattern_len = 1 + needle_len + 1;
     char *pattern = calloc(pattern_len + 1, 1);
