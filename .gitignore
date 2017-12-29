@@ -1,8 +1,7 @@
 build
-obj
+build.log
 gmon.out
 vgcore.*
+callgrind.out.*
 *.jpg
 *.png
-image
-image.jpg

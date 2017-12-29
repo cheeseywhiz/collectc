@@ -2,7 +2,7 @@
 #define JSON_H
 
 #include "jsmn.h"
-#include "rand.h"
+#include "random_popper.h"
 
 typedef struct {
     char *json_str;
@@ -15,10 +15,10 @@ enum key_error {
     JU_ENO_MATCH = -2
 };
 
-ju_json_t* ju_parse(char*);
-void ju_free(ju_json_t*);
+ju_json_t* ju_parse(char *json_str);
+void ju_free(ju_json_t *self);
 
-int ju_object_get(ju_json_t*, int, char*);
+int ju_object_get(ju_json_t *self, int object, char *key);
 
 struct ju_array_iter {
     ju_json_t *json;
@@ -28,24 +28,9 @@ struct ju_array_iter {
     int size;
 };
 
-struct ju_array_iter* ju_array_init(ju_json_t*, int);
-int ju_array_next(struct ju_array_iter*);
+struct ju_array_iter* ju_array_init(ju_json_t *self, int array_i);
+int ju_array_next(struct ju_array_iter *self);
 
-struct ju_array_iter* ju_url_init(ju_json_t*);
-char* ju_url_next(struct ju_array_iter*);
-
-struct ju_random_iter {
-    ju_json_t *json;
-    int *list;
-    int_list *indices;
-    int index;
-};
-
-struct ju_random_iter* ju_random_init(ju_json_t*, int);
-void ju_random_free(struct ju_random_iter*);
-int ju_random_next(struct ju_random_iter*);
-
-struct ju_random_iter* ju_random_url_init(ju_json_t*);
-char* ju_random_url_next(struct ju_random_iter*);
+rp_t* ju_array_rp(ju_json_t *self, int array_i);
 
 #endif

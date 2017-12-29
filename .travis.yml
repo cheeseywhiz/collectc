@@ -1,8 +1,11 @@
 language: c
 
+env:
+  - LD_LIBRARY_PATH=build
+
 before_install: sudo apt-get install valgrind
 
-script: make deps && make test
+script: make travis
 
 notifications:
   email: false

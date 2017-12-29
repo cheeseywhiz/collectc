@@ -1,14 +1,21 @@
-SRC=$(PWD)/src
-LIB=$(PWD)/lib
-TEST=$(PWD)/test
-BUILD=$(PWD)/build
-OBJ=$(PWD)/obj
+PWD:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+SRC:=$(PWD)/src
+LIB:=$(PWD)/lib
+TEST:=$(PWD)/test
+BUILD:=$(PWD)/build
+OBJ:=$(BUILD)/obj
 
-CFLAGS+=-Wall -Wextra -std=c99 -O2 -fPIC -fverbose-asm -masm=intel -march=native
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native -D_GNU_SOURCE
+
+ifeq ($(DEBUG),1)
+	CFLAGS+=-O3 -g3
+	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
+else
+	CFLAGS+=-O2
+endif
 
 # global jsmn flags
-CFLAGS+=-DJSMN_PARENT_LINKS
-CFLAGS+=-I$(LIB)/jsmn
+CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 LDFLAGS+=-L$(LIB)/jsmn
 LDLIBS+=-ljsmn
 
@@ -22,9 +29,12 @@ endif
 
 all: $(BUILD)/collect
 
-clean:
-	rm -rf $(BUILD) $(OBJ)
+cleandeps:
+	rm -rf $(LIB)/jsmn/test/test_*
 	cd $(LIB)/jsmn && $(MAKE) clean
+
+clean: cleandeps
+	rm -rf $(shell cat .gitignore) /tmp/collectc.* $(LIB)/jsmn/test/test_*
 
 jsmn:
 	cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
@@ -34,10 +44,7 @@ deps: jsmn
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(PWD)/%:
-	mkdir -p $@
-
-OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o
+OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o $(OBJ)/random_popper.o
 
 $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
 	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
@@ -49,11 +56,35 @@ $(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
 $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
-$(BUILD)/test: $(TEST)/test.c $(BUILD)/libcollect.so
-	$(CC) $(CFLAGS) -Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD) -o $@ $< $(LDFLAGS) $(LDLIBS)
+$(OBJ)/%.o: $(TEST)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+TEST_OBJS:=$(OBJ)/jsmntest.o $(OBJ)/pathtest.o $(OBJ)/randtest.o $(OBJ)/regtest.o $(OBJ)/random_popper_test.o
+
+testflags:
+	$(eval CFLAGS+=-Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD))
+
+$(BUILD)/libtest.so: $(OBJ) testflags $(TEST_OBJS) $(BUILD)
+	$(CC) $(CFLAGS) -shared -o $@ $(TEST_OBJS) $(LDFLAGS) $(LDLIBS)
+	$(eval LDFLAGS+=-L$(TEST))
+	$(eval LDLIBS+=-ltest)
+
+$(BUILD)/test: $(TEST)/main.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+
+testdeps:
+	cd $(LIB)/jsmn && $(MAKE) test
 
 test: $(BUILD)/test
-	cd $(LIB)/jsmn && $(MAKE) test
-	$(TEST_CMD)
+	-$(TEST_CMD)
 
-.PHONY: all clean jsmn deps objects test
+travisrun: deps all test
+	$(BUILD)/collect
+
+travis: clean
+	$(MAKE) travisrun 2>&1 | tee $(PWD)/build.log
+
+$(PWD)/%:
+	mkdir -p $@
+
+.PHONY: cleandeps clean jsmn deps testdeps all objects testflags test travisrun travis

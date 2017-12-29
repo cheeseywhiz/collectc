@@ -6,14 +6,14 @@
 #include "get.h"
 #include "reg.h"
 
-#define UA_PREFIX "collectc/"
+#define UA_PREFIX "collectc"
 
 void free_response(struct response *self) {
     free(self->type);
 
     if (self->content) {
         free(self->content);
-    };
+    }
 
     free(self);
 }
@@ -27,7 +27,6 @@ static buffer_t* new_buffer(void) {
     buffer_t *self = malloc(sizeof(buffer_t));
 
     if (!self) {
-        fprintf(stderr, "buffer_t *self calloc\n");
         return NULL;
     };
 
@@ -61,13 +60,11 @@ struct response* get_response(char *url) {
     curl = curl_easy_init();
 
     if (!curl) {
-        fprintf(stderr, "curl init failed\n");
         exit = 1;
         goto cleanup1;
     } else {
-        char user_agent[strlen(UA_PREFIX) + strlen(VERSION) + 1];
-        strcpy(user_agent, UA_PREFIX);
-        strcat(user_agent, VERSION);
+        char user_agent[strlen(UA_PREFIX) + 1 + strlen(VERSION) + 1];
+        sprintf(user_agent, "%s/%s", UA_PREFIX, VERSION);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
     };
 
@@ -105,7 +102,6 @@ struct response* get_response(char *url) {
     struct response *re = malloc(sizeof(struct response));
 
     if (!re) {
-        fprintf(stderr, "malloc struct response*\n");
         exit = 1;
         goto cleanup2;
     };
@@ -126,10 +122,11 @@ struct response* get_response(char *url) {
     re->type = match;
     re->content = ct_buf->content;
     re->length = ct_buf->length;
+    re->url = url;
 
     if (hd_buf->content) {
         free(hd_buf->content);
-    };
+    }
 
 cleanup2:
     free(hd_buf);
@@ -144,4 +141,38 @@ cleanup1:
     } else {
         return NULL;
     };
+}
+
+static int verify_image(struct response *re) {
+    char *error_msg = "";
+
+    if (regex_contains(re->url, "removed")) {
+        error_msg = "Appears to be removed";
+    }
+
+    if (!regex_contains(re->type, "image")) {
+        error_msg = "Not an image";
+    }
+
+    if (regex_contains(re->type, "gif")) {
+        error_msg = "Is a .gif";
+    }
+
+    if (strlen(error_msg)) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+struct response* get_image(char *url) {
+    struct response *re = get_response(url);
+
+    if (!re) {
+        return NULL;
+    } else if (verify_image(re)) {
+        return re;
+    } else {
+        return NULL;
+    }
 }

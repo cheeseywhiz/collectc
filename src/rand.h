@@ -10,8 +10,6 @@ typedef struct {
     int length;
 } int_list;
 
-int randbelow(int);
-int_list* int_list_random_order(int);
-void free_int_list(int_list*);
+int randbelow(int n);
 
 #endif
