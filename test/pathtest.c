@@ -269,8 +269,8 @@ SSSCORE test_mkdir(char *prefix) {
     };
 
     for (int i = 0; i < n_cases; i++) {
-        char *dir = cases[i];
-        char *case_ = path_join(prefix, dir);
+        char *case_dir = cases[i];
+        char *case_ = path_join(prefix, case_dir);
 
         if (!case_) {
             FAIL();
