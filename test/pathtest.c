@@ -253,6 +253,7 @@ SSSCORE test_join(void) {
 
 SSSCORE test_mkdir(char *prefix) {
     SCORE_INIT();
+    printf("prefix = \"%s\";\n", prefix);
     int n_cases = 4;
     char *dir = "dir";
     char *joined = path_join(dir, "dir2");
@@ -274,14 +275,29 @@ SSSCORE test_mkdir(char *prefix) {
 
         if (!case_) {
             FAIL();
+            printf("%s failed to join\n", case_dir);
             continue;
         }
 
-        ASSERT(!path_mkdir(case_, MODE_DEF, EXISTS_OK_DEF));
+        if (!path_mkdir(case_, MODE_DEF, EXISTS_OK_DEF)) {
+            PASS();
+            printf("%s was made\n", case_);
+        } else {
+            FAIL();
+            printf("%s failed to make\n", case_);
+        }
+
         free(case_);
     }
 
-    ASSERT(path_mkdir(dir, MODE_DEF, 0));
+    if (path_mkdir(dir, MODE_DEF, 0)) {
+        PASS();
+        printf("%s expectingly failed to remake\n", dir);
+    } else {
+        FAIL();
+        printf("%s remake did not fail: uh-oh\n", dir);
+    }
+
     free(joined);
     RETURN_SCORE();
 }
