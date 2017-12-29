@@ -251,40 +251,69 @@ SSSCORE test_join(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_mkdir(char *prefix) {
+SSSCORE test_mkdir_none(char *prefix, char **cases, int n_cases) {
     SCORE_INIT();
-    int n_cases = 4;
-    char *dir = "dir";
-    char *joined = path_join(dir, "dir2");
-
-    if (!joined) {
-        RETURN_SCORE();
-    }
-
-    char *cases[] = {
-        dir,
-        joined,
-        "dir3/dir4",
-        dir,
-    };
 
     for (int i = 0; i < n_cases; i++) {
-        char *dir = cases[i];
-        char *case_ = path_join(prefix, dir);
-
-        if (!case_) {
-            FAIL();
-            continue;
-        }
-
-        ASSERT(!path_mkdir(case_, MODE_DEF, EXISTS_OK_DEF));
+        char *case_dir = cases[i];
+        char *case_ = path_join(prefix, case_dir);
+        ASSERT(!path_mkdir(case_, MK_MODE_511, 0));
         free(case_);
     }
 
-    ASSERT(path_mkdir(dir, MODE_DEF, 0));
-    free(joined);
     RETURN_SCORE();
 }
+
+SSSCORE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
+    SCORE_INIT();
+
+    for (int i = 0; i < n_cases; i++) {
+        char *case_dir = cases[i];
+        char *case_ = path_join(prefix, case_dir);
+        ASSERT(!path_mkdir(case_, MK_MODE_511, MK_EXISTS_OK));
+        free(case_);
+    }
+
+    RETURN_SCORE();
+}
+
+SSSCORE test_mkdir_parent(char *prefix) {
+    SCORE_INIT();
+    int n_cases = 3;
+    char *cases[] = {
+        "dir1",
+        "dir2/dir3",
+        "dir4/dir5/dir6",
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        char *case_dir = cases[i];
+        char *case_ = path_join(prefix, case_dir);
+        ASSERT(!path_mkdir(case_, MK_MODE_511, MK_PARENTS));
+        free(case_);
+    }
+
+    RETURN_SCORE();
+}
+
+SSSCORE test_mkdir(void) {
+    SCORE_INIT();
+    char *prefix1 = path_mktempd();
+    char *prefix2 = path_mktempd();
+    int n_cases = 3;
+    char *cases[] = {
+        "dir1",
+        "dir2",
+        "dir3",
+    };
+
+    SUB_SCORE(test_mkdir_none(prefix1, cases, n_cases));
+    SUB_SCORE(test_mkdir_exists_ok(prefix1, cases, n_cases));
+    SUB_SCORE(test_mkdir_parent(prefix2));
+    free(prefix1);
+    free(prefix2);
+    RETURN_SCORE();
+};
 
 struct score path_test_main(void) {
     MODULE_INIT();
@@ -297,8 +326,6 @@ struct score path_test_main(void) {
     FUNCTION_REPORT("path_parent()", test_parent());
     FUNCTION_REPORT("path_join()", test_join());
     FUNCTION_REPORT("path_url_fname()", test_url_fname());
-    char *tmp_dir = path_mktempd();
-    FUNCTION_REPORT("path_mkdir()", test_mkdir(tmp_dir));
-    free(tmp_dir);
+    FUNCTION_REPORT("path_mkdir()", test_mkdir());
     MODULE_EXIT();
 }

@@ -5,27 +5,33 @@ TEST:=$(PWD)/test
 BUILD:=$(PWD)/build
 OBJ:=$(BUILD)/obj
 
+OBJECTS:=get.o jsmnutils.o rand.o reg.o path.o raw.o random_popper.o
+TEST_OBJS:=jsmntest.o pathtest.o randtest.o regtest.o random_popper_test.o
+
+OBJECTS:=$(addprefix $(OBJ)/,$(OBJECTS))
+TEST_OBJS:=$(addprefix $(OBJ)/,$(TEST_OBJS))
+
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native -D_GNU_SOURCE
+CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 
 ifeq ($(DEBUG),1)
 	CFLAGS+=-O3 -g3
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
+	TEST_CMD:=-
 else
 	CFLAGS+=-O2
 endif
 
-# global jsmn flags
-CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
-LDFLAGS+=-L$(LIB)/jsmn
-LDLIBS+=-ljsmn
+TEST_CFLAGS:=-I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
+TEST_CFLAGS+=-Og -g3 -Wno-unused-variable
 
 VALGRIND:=$(shell command -v valgrind 2>/dev/null)
 
 ifdef VALGRIND
-	TEST_CMD=valgrind $(VFLAGS) $(BUILD)/test
-else
-	TEST_CMD=$(BUILD)/test
+	TEST_CMD+=valgrind $(VFLAGS)
 endif
+
+TEST_CMD+=$(BUILD)/test
 
 all: $(BUILD)/collect
 
@@ -44,47 +50,40 @@ deps: jsmn
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-OBJECTS:=$(OBJ)/get.o $(OBJ)/jsmnutils.o $(OBJ)/rand.o $(OBJ)/reg.o $(OBJ)/path.o $(OBJ)/raw.o $(OBJ)/random_popper.o
-
-$(BUILD)/libcollect.so: $(OBJ) $(OBJECTS) $(BUILD)
-	$(eval LDLIBS+=$(shell pkg-config --libs --cflags libcurl))
-	$(eval LDLIBS+=-lm)
+$(BUILD)/libcollect.so: LDLIBS+=-ljsmn -lm $(shell pkg-config --libs --cflags libcurl)
+$(BUILD)/libcollect.so: LDFLAGS+=-L$(LIB)/jsmn
+$(BUILD)/libcollect.so: $(OBJ)/ $(OBJECTS) $(BUILD)/
 	$(CC) $(CFLAGS) -shared -o $@ $(OBJECTS) $(LDFLAGS) $(LDLIBS)
-	$(eval LDFLAGS=-L$(BUILD))
-	$(eval LDLIBS=-lcollect)
 
 $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect
 
 $(OBJ)/%.o: $(TEST)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-TEST_OBJS:=$(OBJ)/jsmntest.o $(OBJ)/pathtest.o $(OBJ)/randtest.o $(OBJ)/regtest.o $(OBJ)/random_popper_test.o
-
-testflags:
-	$(eval CFLAGS+=-Og -g3 -I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD))
-
-$(BUILD)/libtest.so: $(OBJ) testflags $(TEST_OBJS) $(BUILD)
+$(BUILD)/libtest.so: CFLAGS+=$(TEST_CFLAGS)
+$(BUILD)/libtest.so: $(OBJ)/ $(TEST_OBJS) $(BUILD)/
 	$(CC) $(CFLAGS) -shared -o $@ $(TEST_OBJS) $(LDFLAGS) $(LDLIBS)
-	$(eval LDFLAGS+=-L$(TEST))
-	$(eval LDLIBS+=-ltest)
 
 $(BUILD)/test: $(TEST)/main.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -ltest -lcollect
 
 testdeps:
 	cd $(LIB)/jsmn && $(MAKE) test
 
 test: $(BUILD)/test
-	-$(TEST_CMD)
+	$(TEST_CMD)
+
+version:
+	$(MAKE) --version
 
 travisrun: deps all test
 	$(BUILD)/collect
 
-travis: clean
+travis: version clean
 	$(MAKE) travisrun 2>&1 | tee $(PWD)/build.log
 
-$(PWD)/%:
+$(PWD)/%/:
 	mkdir -p $@
 
-.PHONY: cleandeps clean jsmn deps testdeps all objects testflags test travisrun travis
+.PHONY: version cleandeps clean jsmn deps testdeps all test travisrun travis

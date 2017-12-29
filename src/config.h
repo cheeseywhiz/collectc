@@ -1,6 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VERSION "0.2"
+#define VERSION "0.3"
 
 #endif

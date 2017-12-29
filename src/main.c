@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 
     char *dir = path_norm(".");
 
-    if (path_mkdir(dir, MODE_DEF, EXISTS_OK_DEF)) {
+    if (path_mkdir(dir, MK_MODE_511, MK_PARENTS | MK_EXISTS_OK)) {
         return 1;
     }
 
