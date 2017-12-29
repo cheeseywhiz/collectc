@@ -16,10 +16,14 @@ int path_exists(char *path);
 int path_is_abs(char *path);
 int path_open_write(char *path);
 
-#define MODE_DEF S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#define EXISTS_OK_DEF 1
+#define MK_MODE_511 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
 
-int path_mkdir(char *path, int mode, int exists_ok);
+enum path_mkdir_flags {
+    MK_PARENTS = 1 << 0,
+    MK_EXISTS_OK = 1 << 1,
+};
+
+int path_mkdir(char *path, int mode, int mk_flags);
 char* path_mktempd(void);
 char* path_url_fname(char *path, char *url);
 

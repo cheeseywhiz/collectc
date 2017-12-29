@@ -344,30 +344,39 @@ int path_open_write(char *path) {
     return open(path, flags, mode);
 }
 
-int path_mkdir(char *path, int mode, int exists_ok) {
+int path_mkdir(char *path, int mode, int mk_flags) {
     path = path_abspath(path);
 
     if (!path) {
         return 1;
-    }
-
-    if (exists_ok && path_exists(path)) {
+    } else if ((mk_flags & MK_EXISTS_OK) && path_exists(path)) {
         free(path);
         return 0;
+    } 
+
+    int path_failed, parent_failed;
+    path_failed = mkdir(path, mode);
+
+    if (!path_failed) {
+        free(path);
+        return 0;
+    } else if (!(mk_flags & MK_PARENTS)) {
+        free(path);
+        return 1;
     }
 
     char *parent = path_parent(path);
-    int parent_ret = path_mkdir(parent, mode, 1);
+    parent_failed = path_mkdir(parent, mode, MK_EXISTS_OK | mk_flags);
     free(parent);
 
-    if (parent_ret) {
+    if (parent_failed) {
         free(path);
-        return parent_ret;
+        return parent_failed;
     }
 
-    int path_ret = mkdir(path, mode);
+    path_failed = path_mkdir(path, mode, mk_flags);
     free(path);
-    return path_ret;
+    return path_failed;
 }
 
 char* path_mktempd(void) {
