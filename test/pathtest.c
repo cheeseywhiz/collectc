@@ -257,7 +257,7 @@ SSSCORE test_mkdir_none(char *prefix, char **cases, int n_cases) {
     for (int i = 0; i < n_cases; i++) {
         char *case_dir = cases[i];
         char *case_ = path_join(prefix, case_dir);
-        ASSERT(!path_mkdir(case_, MK_MODE_511, 0));
+        ASSERT(!path_mkdir(case_, MK_MODE_755, 0));
         free(case_);
     }
 
@@ -270,7 +270,7 @@ SSSCORE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
     for (int i = 0; i < n_cases; i++) {
         char *case_dir = cases[i];
         char *case_ = path_join(prefix, case_dir);
-        ASSERT(!path_mkdir(case_, MK_MODE_511, MK_EXISTS_OK));
+        ASSERT(!path_mkdir(case_, MK_MODE_755, MK_EXISTS_OK));
         free(case_);
     }
 
@@ -289,7 +289,7 @@ SSSCORE test_mkdir_parent(char *prefix) {
     for (int i = 0; i < n_cases; i++) {
         char *case_dir = cases[i];
         char *case_ = path_join(prefix, case_dir);
-        ASSERT(!path_mkdir(case_, MK_MODE_511, MK_PARENTS));
+        ASSERT(!path_mkdir(case_, MK_MODE_755, MK_PARENTS));
         free(case_);
     }
 

@@ -16,7 +16,7 @@ int path_exists(char *path);
 int path_is_abs(char *path);
 int path_open_write(char *path);
 
-#define MK_MODE_511 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
+#define MK_MODE_755 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
 
 enum path_mkdir_flags {
     MK_PARENTS = 1 << 0,
