@@ -7,9 +7,11 @@
 #include <string.h>
 #include <regex.h>
 #include <limits.h>
+#include <dirent.h>
 
 #include "path.h"
 #include "reg.h"
+#include "random_popper.h"
 
 static char* home_dir_user(char *username) {
     struct passwd *pwd = getpwnam(username);
@@ -314,15 +316,15 @@ int path_eq(char *path, char *other) {
 }
 
 int path_exists(char *path) {
-    struct stat st;
-    char *norm = path_norm(path);
+    path = path_norm(path);
 
-    if (!norm) {
+    if (!path) {
         return 0;
     }
 
-    int exists = stat(norm, &st) == 0;
-    free(norm);
+    struct stat st;
+    int exists = stat(path, &st) == 0;
+    free(path);
     return exists;
 }
 
@@ -336,6 +338,81 @@ int path_is_abs(char *path) {
     int is_abs = regex_starts_with(norm, "/");
     free(norm);
     return is_abs;
+}
+
+int path_is_dir(char *path) {
+    path = path_norm(path);
+
+    if (!path) {
+        return 1;
+    }
+
+    struct stat st;
+
+    if (stat(path, &st)) {
+        free(path);
+        return -1;
+    }
+
+    /* sys/stat.h */
+    int is_dir = S_ISDIR(st.st_mode);
+    free(path);
+    return is_dir;
+}
+
+static rp_t* append_entry_path(rp_t **self, char *path, struct dirent *entry) {
+    char *entry_path = path_join(path, entry->d_name);
+
+    if (!entry_path) {
+        return NULL;
+    }
+
+    rp_t *new_item = rp_append(self, entry_path);
+
+    if (!new_item) {
+        free(entry_path);
+        return NULL;
+    }
+
+    return new_item;
+}
+
+rp_t* path_list_dir(char *path) {
+    path = path_norm(path);
+
+    if (!path) {
+        return NULL;
+    } else if (!path_is_dir(path)) {
+        free(path);
+        return NULL;
+    }
+
+    DIR *dir = opendir(path);
+
+    if (!dir) {
+        free(path);
+        return NULL;
+    }
+
+    rp_t *dir_list = NULL;
+    struct dirent *entry;
+
+    for (entry = readdir(dir); entry; entry = readdir(dir)) {
+        if (path_eq(entry->d_name, ".") || path_eq(entry->d_name, "..")) {
+            continue;
+        } else if (!append_entry_path(&dir_list, path, entry)) {
+            break;
+        }
+    }
+
+    free(path);
+
+    if (closedir(dir)) {
+        rp_deep_free(&dir_list);
+        return NULL;
+    };
+
+    return dir_list;
 }
 
 int path_open_write(char *path) {

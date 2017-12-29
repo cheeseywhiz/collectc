@@ -9,7 +9,7 @@ struct path_case {
     char *expected;
 };
 
-SSSCORE test_norm(void) {
+TEST_CASE test_norm(void) {
     SCORE_INIT();
     int n_cases = 23;
     struct path_case cases[] = {
@@ -57,7 +57,7 @@ SSSCORE test_norm(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_basename(void) {
+TEST_CASE test_basename(void) {
     SCORE_INIT();
     int n_cases = 5;
     struct path_case cases[] = {
@@ -78,7 +78,7 @@ SSSCORE test_basename(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_exists_true(void) {
+TEST_CASE test_exists_true(void) {
     SCORE_INIT();
     int n_cases = 6;
     char *cwd = path_cwd();
@@ -100,7 +100,7 @@ SSSCORE test_exists_true(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_exists_false(void) {
+TEST_CASE test_exists_false(void) {
     SCORE_INIT();
     int n_cases = 3;
     char *cwd = path_cwd();
@@ -122,7 +122,7 @@ SSSCORE test_exists_false(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_is_abs_true(void) {
+TEST_CASE test_is_abs_true(void) {
     SCORE_INIT();
     int n_cases = 4;
     char *cases[] = {
@@ -140,7 +140,7 @@ SSSCORE test_is_abs_true(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_is_abs_false(void) {
+TEST_CASE test_is_abs_false(void) {
     SCORE_INIT();
     int n_cases = 3;
     char *cases[] = {
@@ -163,7 +163,7 @@ struct case_url_fname {
     char *expected;
 };
 
-SSSCORE test_url_fname(void) {
+TEST_CASE test_url_fname(void) {
     SCORE_INIT();
     int n_cases = 3;
     struct case_url_fname cases[] = {
@@ -188,7 +188,7 @@ SSSCORE test_url_fname(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_parent(void) {
+TEST_CASE test_parent(void) {
     SCORE_INIT();
     int n_cases = 6;
     struct path_case cases[] = {
@@ -210,13 +210,96 @@ SSSCORE test_parent(void) {
     RETURN_SCORE();
 }
 
+static int rp_contains_path(rp_t **self, char *path) {
+    rp_t *item;
+    char *item_path;
+
+    for (item = *self; item; item = item->next) {
+        item_path = item->data;
+
+        if (path_eq(path, item_path)) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+TEST_CASE test_is_dir(void) {
+    SCORE_INIT();
+    int n_cases = 7;
+    char *tmp = path_mktempd();
+    char *cwd = path_cwd();
+    char *cases[] = {
+        "/",
+        "/tmp",
+        "/home",
+        "/etc",
+        "/dev",
+        tmp,
+        cwd,
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        char *case_ = cases[i];
+        ASSERT(path_is_dir(case_));
+    }
+
+    free(cwd);
+    free(tmp);
+    RETURN_SCORE();
+}
+
+TEST_CASE test_list_dir_contains(rp_t **dir_list) {
+    SCORE_INIT();
+    int n_cases = 4;
+    char *cases[] = {
+        "/dev/null",
+        "/dev/zero",
+        "/dev/stdout",
+        "/dev/stderr",
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        ASSERT(rp_contains_path(dir_list, cases[i]));
+    }
+
+    RETURN_SCORE();
+}
+
+TEST_CASE test_list_dir_not_contains(rp_t **dir_list) {
+    SCORE_INIT();
+    int n_cases = 4;
+    char *cases[] = {
+        "/",
+        "/dev",
+        "/home",
+        "/dev/disk/by-id"
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        ASSERT(!rp_contains_path(dir_list, cases[i]));
+    }
+
+    RETURN_SCORE();
+}
+
+TEST_CASE test_list_dir(void) {
+    SCORE_INIT();
+    rp_t *dir_list = path_list_dir("/dev");
+    SUBSCORE(test_list_dir_contains(&dir_list));
+    SUBSCORE(test_list_dir_not_contains(&dir_list));
+    rp_deep_free(&dir_list);
+    RETURN_SCORE();
+}
+
 struct case_join {
     char *path;
     char *other;
     char *expected;
 };
 
-SSSCORE test_join(void) {
+TEST_CASE test_join(void) {
     SCORE_INIT();
     int n_cases = 11;
     struct case_join cases[] = {
@@ -251,7 +334,7 @@ SSSCORE test_join(void) {
     RETURN_SCORE();
 }
 
-SSSCORE test_mkdir_none(char *prefix, char **cases, int n_cases) {
+TEST_CASE test_mkdir_none(char *prefix, char **cases, int n_cases) {
     SCORE_INIT();
 
     for (int i = 0; i < n_cases; i++) {
@@ -264,7 +347,7 @@ SSSCORE test_mkdir_none(char *prefix, char **cases, int n_cases) {
     RETURN_SCORE();
 }
 
-SSSCORE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
+TEST_CASE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
     SCORE_INIT();
 
     for (int i = 0; i < n_cases; i++) {
@@ -277,7 +360,7 @@ SSSCORE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
     RETURN_SCORE();
 }
 
-SSSCORE test_mkdir_parent(char *prefix) {
+TEST_CASE test_mkdir_parent(char *prefix) {
     SCORE_INIT();
     int n_cases = 3;
     char *cases[] = {
@@ -296,7 +379,7 @@ SSSCORE test_mkdir_parent(char *prefix) {
     RETURN_SCORE();
 }
 
-SSSCORE test_mkdir(void) {
+TEST_CASE test_mkdir(void) {
     SCORE_INIT();
     char *prefix1 = path_mktempd();
     char *prefix2 = path_mktempd();
@@ -307,25 +390,27 @@ SSSCORE test_mkdir(void) {
         "dir3",
     };
 
-    SUB_SCORE(test_mkdir_none(prefix1, cases, n_cases));
-    SUB_SCORE(test_mkdir_exists_ok(prefix1, cases, n_cases));
-    SUB_SCORE(test_mkdir_parent(prefix2));
+    SUBSCORE(test_mkdir_none(prefix1, cases, n_cases));
+    SUBSCORE(test_mkdir_exists_ok(prefix1, cases, n_cases));
+    SUBSCORE(test_mkdir_parent(prefix2));
     free(prefix1);
     free(prefix2);
     RETURN_SCORE();
 };
 
-struct score path_test_main(void) {
-    MODULE_INIT();
+TEST_MOD path_test_main(void) {
+    SCORE_INIT();
     FUNCTION_REPORT("path_norm()", test_norm());
     FUNCTION_REPORT("path_basename()", test_basename());
     FUNCTION_REPORT("path_exists()", test_exists_true());
     FUNCTION_REPORT("!path_exists()", test_exists_false());
     FUNCTION_REPORT("path_is_abs()", test_is_abs_true());
     FUNCTION_REPORT("!path_is_abs()", test_is_abs_false());
+    FUNCTION_REPORT("path_is_dir()", test_is_dir());
+    FUNCTION_REPORT("path_list_dir()", test_list_dir());
     FUNCTION_REPORT("path_parent()", test_parent());
     FUNCTION_REPORT("path_join()", test_join());
     FUNCTION_REPORT("path_url_fname()", test_url_fname());
     FUNCTION_REPORT("path_mkdir()", test_mkdir());
-    MODULE_EXIT();
+    RETURN_SCORE();
 }

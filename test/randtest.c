@@ -3,7 +3,7 @@
 #include "rand.h"
 #include "test.h"
 
-SSSCORE test_randbelow(int n, int below) {
+TEST_CASE test_randbelow(int n, int below) {
     SCORE_INIT();
     printf("[");
     int rand;
@@ -18,8 +18,8 @@ SSSCORE test_randbelow(int n, int below) {
     RETURN_SCORE();
 }
 
-struct score rand_test_main(void) {
-    MODULE_INIT();
+TEST_MOD rand_test_main(void) {
+    SCORE_INIT();
     FUNCTION_REPORT("randbelow()", test_randbelow(25, 10));
-    MODULE_EXIT();
+    RETURN_SCORE();
 }

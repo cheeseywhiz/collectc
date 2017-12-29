@@ -3,7 +3,7 @@
 #include "test.h"
 
 int main(void) {
-    MAIN_INIT();
+    SCORE_INIT();
     MODULE_REPORT("rand.c", rand_test_main());
     MODULE_REPORT("jsmnutils.c", ju_test_main());
     MODULE_REPORT("reg.c", regex_test_main());

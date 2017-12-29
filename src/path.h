@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "random_popper.h"
+
 char* path_norm(char *path);
 char* path_home(void);
 char* path_cwd(void);
@@ -14,6 +16,8 @@ char* path_abspath(char *path);
 int path_eq(char *path, char *other);
 int path_exists(char *path);
 int path_is_abs(char *path);
+int path_is_dir(char *path);
+rp_t* path_list_dir(char *path);
 int path_open_write(char *path);
 
 #define MK_MODE_755 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH

@@ -7,13 +7,13 @@
 #include "random_popper.h"
 #include "test.h"
 
-SSSCORE test_parse(ju_json_t *json) {
+TEST_CASE test_parse(ju_json_t *json) {
     SCORE_INIT();
     ASSERT(json->n_tokens == 13);
     RETURN_SCORE();
 }
 
-SSSCORE test_object_get(ju_json_t *json) {
+TEST_CASE test_object_get(ju_json_t *json) {
     SCORE_INIT();
     int sub_object = ju_object_get(json, 0, "object");
     ASSERT(sub_object == 2);
@@ -25,13 +25,13 @@ SSSCORE test_object_get(ju_json_t *json) {
     RETURN_SCORE();
 }
 
-SSSCORE test_array_init(struct ju_array_iter *iter) {
+TEST_CASE test_array_init(struct ju_array_iter *iter) {
     SCORE_INIT();
     ASSERT(iter->size == 3);
     RETURN_SCORE();
 }
 
-SSSCORE test_array_next(struct ju_array_iter *iter) {
+TEST_CASE test_array_next(struct ju_array_iter *iter) {
     SCORE_INIT();
     int expected_values[] = {1, 5, 11};
     int actual, i = 0;
@@ -43,7 +43,7 @@ SSSCORE test_array_next(struct ju_array_iter *iter) {
     RETURN_SCORE();
 }
 
-SSSCORE test_array_rp(ju_json_t *json) {
+TEST_CASE test_array_rp(ju_json_t *json) {
     SCORE_INIT();
     int expected_values[] = {7, 8, 9, 10};
     rp_t *popper = ju_array_rp(json, 6);
@@ -61,8 +61,8 @@ SSSCORE test_array_rp(ju_json_t *json) {
     RETURN_SCORE();
 }
 
-struct score ju_test_main(void) {
-    MODULE_INIT();
+TEST_MOD ju_test_main(void) {
+    SCORE_INIT();
     char *data = "{\"object\": {\"key1\": \"value2\"}, \"array\": [\"value3\", \"value4\", \"value5\", \"value6\"], \"key2\": \"value7\"}";
     ju_json_t *json = ju_parse(data);
     FUNCTION_REPORT("ju_parse()", test_parse(json));
@@ -73,5 +73,5 @@ struct score ju_test_main(void) {
     FUNCTION_REPORT("ju_array_next()", test_array_next(iter));
     free(iter);
     ju_free(json);
-    MODULE_EXIT();
+    RETURN_SCORE();
 }
