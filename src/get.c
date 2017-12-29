@@ -27,7 +27,6 @@ static buffer_t* new_buffer(void) {
     buffer_t *self = malloc(sizeof(buffer_t));
 
     if (!self) {
-        fprintf(stderr, "buffer_t *self calloc\n");
         return NULL;
     };
 
@@ -61,7 +60,6 @@ struct response* get_response(char *url) {
     curl = curl_easy_init();
 
     if (!curl) {
-        fprintf(stderr, "curl init failed\n");
         exit = 1;
         goto cleanup1;
     } else {

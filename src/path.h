@@ -7,7 +7,10 @@
 char* path_norm(char *path);
 char* path_home(void);
 char* path_cwd(void);
+char* path_basename(char *path);
+char* path_parent(char *path);
 char* path_join(char *path, char *other);
+char* path_abspath(char *path);
 int path_eq(char *path, char *other);
 int path_exists(char *path);
 int path_is_abs(char *path);

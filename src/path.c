@@ -1,3 +1,4 @@
+#include <libgen.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -18,6 +19,10 @@ static char* home_dir_user(char *username) {
     }
 
     return strdup(pwd->pw_dir);
+}
+
+static char* basename_as_is(char *path) {
+    return strdup(basename(path));
 }
 
 static char* expand_user(char *path) {
@@ -76,6 +81,55 @@ cleanup:
     return path;
 }
 
+static char* fix_double_dots(char *path) {
+    path = strdup(path);
+
+    if (!path) {
+        return NULL;
+    } else if (!regex_contains(path, "..")) {
+        return path;
+    }
+
+    char *new_path;
+
+    if (regex_starts_with(path, "/../")) {
+        new_path = regex_str_slice(path, 3, strlen(path));
+        free(path);
+        path = new_path;
+
+        if (!path) {
+            return NULL;
+        }
+
+        new_path = fix_double_dots(path);
+        free(path);
+        path = new_path;
+        return path;
+    } else if (path_eq(path, "/..")) {
+        free(path);
+        return strdup("/");
+    }
+
+    char *pattern = "([^/]*/\\.\\./?)";
+    char *needle = regex_match_one_subexpr(pattern, path, 0);
+
+    if (!needle) {
+        return path;
+    } else if (regex_starts_with(needle, "../..") || regex_starts_with(needle, "./..")) {
+        free(needle);
+        return path;
+    }
+
+    new_path = regex_remove(path, needle);
+    free(needle);
+    free(path);
+    path = new_path;
+    new_path = fix_double_dots(path);
+    free(path);
+    path = new_path;
+    return path;
+}
+
 static char* trim_path_ends(char *path) {
     path = strdup(path);
 
@@ -121,12 +175,25 @@ char* path_norm(char *path) {
         return NULL;
     }
 
+    new_path = fix_double_dots(path);
+    free(path);
+    path = new_path;
+
+    if (!path) {
+        return NULL;
+    }
+
     new_path = trim_path_ends(path);
     free(path);
     path = new_path;
 
     if (!path) {
         return NULL;
+    }
+
+    if (!strlen(path)) {
+        free(path);
+        path = strdup(".");
     }
 
     return path;
@@ -160,38 +227,86 @@ char* path_cwd(void) {
 #endif /* _GNU_SOURCE */
 }
 
+char* path_basename(char *path) {
+    path = path_norm(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    char *new_path;
+    new_path = basename_as_is(path);
+    free(path);
+    path = new_path;
+    return path;
+}
+
+char* path_parent(char *path) {
+    path = path_norm(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    char *new_path = strdup(dirname(path));
+    free(path);
+    path = new_path;
+    return path;
+}
+
 /* TODO: varargs variant (self, other, other, other) */
 char* path_join(char *path, char *other) {
+    path = path_norm(path);
+
+    if (!path) {
+        return NULL;
+    }
+
+    other = path_norm(other);
+
+    if (!other) {
+        free(path);
+        return NULL;
+    }
+
     if (path_is_abs(other)) {
-        return strdup(other);
+        free(path);
+        return other;
     }
 
     size_t other_len = strlen(other);
 
     if (!other_len) {
-        return strdup(path);
+        free(other);
+        return path;
+    } else if (path_eq(other, ".")) {
+        free(other);
+        other = strdup("");
     }
 
     if (path_eq(path, "/")) {
-        path = "";
+        free(path);
+        path = strdup("");
     }
 
     size_t new_path_len = strlen(path) + 1 + other_len;
-    char *new_path_buf = calloc(new_path_len + 1, 1);
+    char new_path_buf[new_path_len + 1];
+    int spf_err = sprintf(new_path_buf, "%s/%s", path, other) < 0;
+    free(other);
+    free(path);
 
-    if (sprintf(new_path_buf, "%s/%s", path, other) < 0) {
-        free(new_path_buf);
+    if (spf_err) {
         return NULL;
-    } else {
-        char *norm_path = path_norm(new_path_buf);
-        free(new_path_buf);
-
-        if (!norm_path) {
-            return NULL;
-        }
-
-        return norm_path;
     }
+
+    return path_norm(new_path_buf);
+}
+
+char* path_abspath(char *path) {
+    char *cwd = path_cwd();
+    char *abs = path_join(cwd, path);
+    free(cwd);
+    return abs;
 }
 
 int path_eq(char *path, char *other) {
@@ -230,11 +345,29 @@ int path_open_write(char *path) {
 }
 
 int path_mkdir(char *path, int mode, int exists_ok) {
-    if (exists_ok && path_exists(path)) {
-        return 0;
-    } else {
-        return mkdir(path, mode);
+    path = path_abspath(path);
+
+    if (!path) {
+        return 1;
     }
+
+    if (exists_ok && path_exists(path)) {
+        free(path);
+        return 0;
+    }
+
+    char *parent = path_parent(path);
+    int parent_ret = path_mkdir(parent, mode, 1);
+    free(parent);
+
+    if (parent_ret) {
+        free(path);
+        return parent_ret;
+    }
+
+    int path_ret = mkdir(path, mode);
+    free(path);
+    return path_ret;
 }
 
 char* path_mktempd(void) {

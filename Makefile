@@ -29,9 +29,12 @@ endif
 
 all: $(BUILD)/collect
 
-clean:
-	rm -rf $(shell cat .gitignore)
+cleandeps:
+	rm -rf $(LIB)/jsmn/test/test_*
 	cd $(LIB)/jsmn && $(MAKE) clean
+
+clean: cleandeps
+	rm -rf $(shell cat .gitignore) /tmp/collectc.* $(LIB)/jsmn/test/test_*
 
 jsmn:
 	cd $(LIB)/$@ && CFLAGS="-fPIC -DJSMN_PARENT_LINKS" $(MAKE)
@@ -84,4 +87,4 @@ travis: clean
 $(PWD)/%:
 	mkdir -p $@
 
-.PHONY: clean jsmn deps testdeps all objects testflags test travisrun travis
+.PHONY: cleandeps clean jsmn deps testdeps all objects testflags test travisrun travis
