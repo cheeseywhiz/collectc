@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "raw.h"
 #include "path.h"
@@ -12,15 +13,30 @@ int main(int argc, char **argv) {
         reddit_url = argv[1];
     }
 
-    char *dir = path_norm(".");
+    char *dir = path_norm("cache");
 
     if (path_mkdir(dir, MK_MODE_755, MK_PARENTS | MK_EXISTS_OK)) {
+        free(dir);
         return 1;
+    }
+
+    if (!strcmp(reddit_url, "random")) {
+        char *path = path_random(dir);
+        free(dir);
+
+        if (!path) {
+            return 1;
+        }
+
+        printf("%s\n", path);
+        free(path);
+        return 0;
     }
 
     raw_listing *posts = raw_new_listing(dir, reddit_url);
 
     if (!posts) {
+        free(dir);
         return 1;
     }
 
@@ -28,6 +44,7 @@ int main(int argc, char **argv) {
 
     if (!post) {
         raw_free_listing(posts);
+        free(dir);
         return 1;
     }
 

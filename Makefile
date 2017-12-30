@@ -79,6 +79,8 @@ version:
 
 travisrun: deps all test
 	$(BUILD)/collect
+	$(BUILD)/collect
+	$(BUILD)/collect random
 
 travis: version clean
 	$(MAKE) travisrun 2>&1 | tee $(PWD)/build.log

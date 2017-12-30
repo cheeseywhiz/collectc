@@ -415,6 +415,18 @@ rp_t* path_list_dir(char *path) {
     return dir_list;
 }
 
+char* path_random(char *path) {
+    rp_t *dir_list = path_list_dir(path);
+
+    if (!dir_list) {
+        return NULL;
+    }
+
+    char *random = rp_pop_random(&dir_list);
+    rp_deep_free(&dir_list);
+    return random;
+}
+
 int path_open_write(char *path) {
     int flags = O_CREAT | O_WRONLY | O_TRUNC;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
