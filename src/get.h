@@ -14,6 +14,7 @@ void free_response(struct response *self);
 
 /* Abstraction for curl performance */
 struct response* get_response(char *url);
+int get_download_response(struct response *self, char *path);
 struct response* get_image(char *url);
 
 #endif /* GET_H */

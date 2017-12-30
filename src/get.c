@@ -1,10 +1,12 @@
 #include <curl/curl.h>
 #include <regex.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "config.h"
 #include "get.h"
 #include "reg.h"
+#include "path.h"
 
 #define UA_PREFIX "collectc"
 
@@ -99,9 +101,9 @@ struct response* get_response(char *url) {
         goto cleanup2;
     };
 
-    struct response *re = malloc(sizeof(struct response));
+    struct response *self = malloc(sizeof(struct response));
 
-    if (!re) {
+    if (!self) {
         exit = 1;
         goto cleanup2;
     };
@@ -114,15 +116,15 @@ struct response* get_response(char *url) {
 
         if (!match) {
             exit = 1;
-            free(re);
+            free(self);
             goto cleanup2;
         };
     };
 
-    re->type = match;
-    re->content = ct_buf->content;
-    re->length = ct_buf->length;
-    re->url = url;
+    self->type = match;
+    self->content = ct_buf->content;
+    self->length = ct_buf->length;
+    self->url = url;
 
     if (hd_buf->content) {
         free(hd_buf->content);
@@ -137,24 +139,38 @@ cleanup1:
     curl_global_cleanup();
 
     if (!exit) {
-        return re;
+        return self;
     } else {
         return NULL;
     };
 }
 
-static int verify_image(struct response *re) {
+int get_download_response(struct response *self, char *path) {
+    int status = 0;
+    int file = path_open_write(path);
+
+    if (file < 0) {
+        return 1;
+    } else if (write(file, self->content, self->length) < 0) {
+        status = 1;
+    }
+
+    close(file);
+    return status;
+}
+
+static int verify_image(struct response *self) {
     char *error_msg = "";
 
-    if (regex_contains(re->url, "removed")) {
+    if (regex_contains(self->url, "removed")) {
         error_msg = "Appears to be removed";
     }
 
-    if (!regex_contains(re->type, "image")) {
+    if (!regex_contains(self->type, "image")) {
         error_msg = "Not an image";
     }
 
-    if (regex_contains(re->type, "gif")) {
+    if (regex_contains(self->type, "gif")) {
         error_msg = "Is a .gif";
     }
 
@@ -166,12 +182,12 @@ static int verify_image(struct response *re) {
 }
 
 struct response* get_image(char *url) {
-    struct response *re = get_response(url);
+    struct response *self = get_response(url);
 
-    if (!re) {
+    if (!self) {
         return NULL;
-    } else if (verify_image(re)) {
-        return re;
+    } else if (verify_image(self)) {
+        return self;
     } else {
         return NULL;
     }

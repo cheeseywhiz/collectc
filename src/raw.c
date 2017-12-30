@@ -54,50 +54,19 @@ char* raw_post_data_get(struct raw_post *self, char *key) {
 }
 
 int raw_post_download(struct raw_post *self) {
-    struct response *im = get_image(self->url);
+    struct response *re = get_image(self->url);
 
-    if (!im) {
+    if (!re) {
         return -1;
     }
 
-    int file = path_open_write(self->path);
-
-    if (file < 0) {
-        free_response(im);
-        return 1;
-    }
-
-    if (write(file, im->content, im->length) < 0) {
-        close(file);
-        free_response(im);
-        return 2;
-    }
-
-    close(file);
-    free_response(im);
-    return 0;
+    return get_download_response(re, self->path);
 }
 
-static struct raw_base_listing* new_base_listing(char *url) {
+static struct raw_base_listing* new_base_listing(ju_json_t *json) {
     struct raw_base_listing *self = malloc(sizeof(struct raw_base_listing));
 
     if (!self) {
-        return NULL;
-    }
-
-    struct response *re = get_response(url);
-
-    if (!re) {
-        free(self);
-        return NULL;
-    }
-
-    self->re = re;
-    ju_json_t *json = ju_parse(self->re->content);
-
-    if (!json) {
-        free_response(self->re);
-        free(self);
         return NULL;
     }
 
@@ -106,8 +75,6 @@ static struct raw_base_listing* new_base_listing(char *url) {
     int posts_arr_i = ju_object_get(self->json, data_obj_i, "children");
 
     if (posts_arr_i < 1) {
-        ju_free(json);
-        free_response(self->re);
         free(self);
         return NULL;
     }
@@ -115,8 +82,6 @@ static struct raw_base_listing* new_base_listing(char *url) {
     self->popper = ju_array_rp(self->json, posts_arr_i);
 
     if (!self->popper) {
-        ju_free(json);
-        free_response(self->re);
         free(self);
         return NULL;
     }
@@ -127,7 +92,6 @@ static struct raw_base_listing* new_base_listing(char *url) {
 static void free_base_listing(struct raw_base_listing *self) {
     rp_deep_free(&self->popper);
     ju_free(self->json);
-    free_response(self->re);
     free(self);
 }
 
@@ -143,28 +107,65 @@ static int base_listing_next(struct raw_base_listing *self) {
     return next_item;
 }
 
-raw_listing* raw_new_listing(char *path, char *url) {
+raw_listing* raw_listing_data(char *path, ju_json_t *json) {
     raw_listing *self = malloc(sizeof(raw_listing));
 
     if (!self) {
         return NULL;
     }
 
-    self->path = path;
+    self->path = path_norm(path);
 
-    struct raw_base_listing *iter = new_base_listing(url);
-
-    if (!iter) {
+    if (!self->path) {
         free(self);
         return NULL;
     }
 
-    self->iter = iter;
+    self->re = NULL;
+    self->iter = new_base_listing(json);
+
+    if (!self->iter) {
+        free(self);
+        return NULL;
+    }
+
+    return self;
+}
+
+raw_listing* raw_listing_url(char *path, char *url) {
+    struct response *re = get_response(url);
+
+    if (!re) {
+        return NULL;
+    }
+
+    ju_json_t *json = ju_parse(re->content);
+
+    if (!json) {
+        free_response(re);
+        return NULL;
+    }
+
+    raw_listing *self = raw_listing_data(path, json);
+
+    if (!self) {
+        ju_free(json);
+        free_response(re);
+        return NULL;
+    }
+
+    self->re = re;
     return self;
 }
 
 void raw_free_listing(raw_listing *self) {
     free_base_listing(self->iter);
+
+    if (self->re) {
+        free_response(self->re);
+    }
+
+    free(self->path);
     free(self);
 }
 
@@ -245,7 +246,7 @@ struct raw_post* raw_listing_next_no_repeat_download(raw_listing *self) {
 }
 
 struct raw_post* raw_listing_flags_next_download(raw_listing *self, int flags) {
-    if (flags & NO_REPEAT) {
+    if (flags & RAW_NO_REPEAT) {
         return raw_listing_next_no_repeat_download(self);
     } else {
         return raw_listing_next_download(self);

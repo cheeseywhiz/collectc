@@ -33,14 +33,14 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    raw_listing *posts = raw_new_listing(dir, reddit_url);
+    raw_listing *posts = raw_listing_url(dir, reddit_url);
 
     if (!posts) {
         free(dir);
         return 1;
     }
 
-    struct raw_post *post = raw_listing_flags_next_download(posts, NO_REPEAT);
+    struct raw_post *post = raw_listing_flags_next_download(posts, RAW_NO_REPEAT);
 
     if (!post) {
         raw_free_listing(posts);

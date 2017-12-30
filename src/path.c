@@ -428,9 +428,17 @@ char* path_random(char *path) {
 }
 
 int path_open_write(char *path) {
+    path = path_norm(path);
+
+    if (!path) {
+        return -1;
+    }
+
     int flags = O_CREAT | O_WRONLY | O_TRUNC;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    return open(path, flags, mode);
+    int fd = open(path, flags, mode);
+    free(path);
+    return fd;
 }
 
 int path_mkdir(char *path, int mode, int mk_flags) {
