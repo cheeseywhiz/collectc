@@ -3,32 +3,39 @@ LIB:=lib
 TEST:=test
 BUILD:=build
 OBJ:=$(BUILD)/obj
+DIRS:=$(BUILD) $(OBJ)
+TEST_PROGRAM:=$(BUILD)/test
+auto_link+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
 OBJECTS:=get jsmnutils rand reg path raw random_popper
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
 SRC_HDR:=config $(OBJECTS)
 TEST_HDR:=test
 
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE
+CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
+BUILD_COLLECT_CFLAGS:=
+
+TEST_CFLAGS:=-I$(SRC)
+TEST_CFLAGS+=-Og -g3 -Wno-unused-variable
+BUILD_TEST_CFLAGS:=$(auto_link)
+
+version_programs:=$(CC) $(LD) $(MAKE) curl-config
+
 OBJECTS:=$(addprefix $(OBJ)/,$(addsuffix .o,$(OBJECTS)))
 TEST_OBJS:=$(addprefix $(OBJ)/,$(addsuffix .o,$(TEST_OBJS)))
 SRC_HDR:=$(addprefix $(SRC)/,$(addsuffix .h,$(SRC_HDR)))
 TEST_HDR:=$(addprefix $(TEST)/,$(addsuffix .h,$(TEST_HDR)))
 
-CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native -D_GNU_SOURCE
-CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
-
-version_programs:=$(CC) $(LD) curl-config $(MAKE)
-
 ifeq ($(DEBUG),1)
 	CFLAGS+=-Og -g3
+	BUILD_COLLECT_CFLAGS:=$(auto_link)
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
 	TEST_CMD:=-
 else
 	CFLAGS+=-O2
+	TEST_CMD:=
 endif
-
-TEST_CFLAGS:=-I$(SRC) -Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
-TEST_CFLAGS+=-Og -g3 -Wno-unused-variable
 
 VALGRIND:=$(shell command -v valgrind 2>/dev/null)
 
@@ -36,12 +43,10 @@ ifdef VALGRIND
 	TEST_CMD+=valgrind $(VFLAGS)
 endif
 
-TEST_CMD+=$(BUILD)/test
+TEST_CMD+=$(TEST_PROGRAM)
 
 .PHONY: all
 all: builddirs $(BUILD)/collect
-
-DIRS:=$(BUILD) $(OBJ)
 
 $(DIRS):
 	mkdir -p $@
@@ -81,7 +86,7 @@ $(BUILD)/libcollect.so: $(OBJECTS)
 	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect
+	$(CC) $(CFLAGS) $(BUILD_COLLECT_CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect
 
 # TEST_OBJS
 $(OBJ)/%.o: $(TEST)/%.c $(SRC_HDR) $(TEST_HDR)
@@ -92,7 +97,7 @@ $(BUILD)/libtest.so: $(TEST_OBJS)
 	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(BUILD)/test: $(TEST)/main.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
-	$(CC) $(CFLAGS) $(TEST_CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -ltest -lcollect
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) $(BUILD_TEST_CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -ltest -lcollect
 
 .PHONY: testdeps
 testdeps:
@@ -104,8 +109,6 @@ testcollect:
 
 .PHONY: test
 test: builddirs $(BUILD)/test testcollect
-
-
 
 .PHONY: $(version_programs)
 $(version_programs):

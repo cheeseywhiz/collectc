@@ -26,7 +26,7 @@ struct score {
 #define FAIL() FAILING++
 #define ASSERT(bool) if (bool) PASS(); else FAIL()
 #define ADD_PASS(n) PASSING += n
-#define ADD_FAIL(n) FAILING +=n
+#define ADD_FAIL(n) FAILING += n
 #define ADD_SCORE(pass, fail) \
     ADD_PASS(pass); \
     ADD_PASS(fail)
@@ -52,7 +52,7 @@ struct score {
     SUBSCORE(score); \
     printf("%s summary:\n", name); \
     REPORT_SUBSCORE(); \
-    printf("\n");
+    printf("\n")
 
 #define MAIN_EXIT() \
     printf("test summary:\n"); \

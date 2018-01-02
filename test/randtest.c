@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "rand.h"
 #include "test.h"
 

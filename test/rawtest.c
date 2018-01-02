@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdio.h>
 
 #include "raw.h"
 #include "jsmnutils.h"
