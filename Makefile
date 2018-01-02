@@ -17,6 +17,8 @@ TEST_HDR:=$(addprefix $(TEST)/,$(addsuffix .h,$(TEST_HDR)))
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -march=native -D_GNU_SOURCE
 CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 
+version_programs:=$(CC) $(LD) curl-config $(MAKE)
+
 ifeq ($(DEBUG),1)
 	CFLAGS+=-Og -g3
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
@@ -103,9 +105,15 @@ testcollect:
 .PHONY: test
 test: builddirs $(BUILD)/test testcollect
 
+
+
+.PHONY: $(version_programs)
+$(version_programs):
+	-$@ --version
+	@echo
+
 .PHONY: version
-version:
-	$(MAKE) --version
+version: $(version_programs)
 
 .PHONY: travisrun
 travisrun: version deps all test
@@ -115,4 +123,4 @@ travisrun: version deps all test
 
 .PHONY: travis
 travis: clean
-	./.teeexit.sh build.log $(MAKE) travisrun
+	./.teeexit.sh travis.log $(MAKE) travisrun
