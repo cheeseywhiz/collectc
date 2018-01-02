@@ -141,7 +141,6 @@ void* rp_pop_index(rp_t **self, size_t index) {
 }
 
 void* rp_pop_random(rp_t **self) {
-    srand(urandom_number());
     return rp_pop_index(self, randbelow(rp_len(self)));
 }
 

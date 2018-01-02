@@ -1,5 +1,6 @@
 build
-build.log
+travis.log
+cache
 gmon.out
 vgcore.*
 callgrind.out.*

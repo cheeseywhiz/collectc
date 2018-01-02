@@ -1,9 +1,13 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "raw.h"
 #include "path.h"
+#include "rand.h"
 
 int main(int argc, char **argv) {
+    rand_reseed();
     char *reddit_url;
 
     if (argc < 2) {
@@ -12,22 +16,39 @@ int main(int argc, char **argv) {
         reddit_url = argv[1];
     }
 
-    char *dir = path_norm(".");
+    char *dir = path_norm("cache");
 
-    if (path_mkdir(dir, MK_MODE_511, MK_PARENTS | MK_EXISTS_OK)) {
+    if (path_mkdir(dir, MK_MODE_755, MK_PARENTS | MK_EXISTS_OK)) {
+        free(dir);
         return 1;
     }
 
-    raw_listing *posts = raw_new_listing(dir, reddit_url);
+    if (!strcmp(reddit_url, "random")) {
+        char *path = path_random_file(dir);
+        free(dir);
+
+        if (!path) {
+            return 1;
+        }
+
+        printf("%s\n", path);
+        free(path);
+        return 0;
+    }
+
+    raw_listing *posts = raw_listing_url(dir, reddit_url);
 
     if (!posts) {
+        free(dir);
         return 1;
     }
 
-    struct raw_post *post = raw_listing_flags_next_download(posts, NO_REPEAT);
+    int flags = RAW_NO_REPEAT | RAW_RANDOM | RAW_DOWNLOAD;
+    struct raw_post *post = raw_listing_next(posts, flags);
 
     if (!post) {
         raw_free_listing(posts);
+        free(dir);
         return 1;
     }
 

@@ -5,11 +5,11 @@
 #include <pwd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <regex.h>
-#include <limits.h>
+#include <dirent.h>
 
 #include "path.h"
 #include "reg.h"
+#include "random_popper.h"
 
 static char* home_dir_user(char *username) {
     struct passwd *pwd = getpwnam(username);
@@ -33,7 +33,7 @@ static char* expand_user(char *path) {
     }
 
     char *pattern = "^~([^/]*)";
-    char *user = regex_match_one_subexpr(pattern, path, REG_EXTENDED);
+    char *user = regex_match_one_subexpr(pattern, path, 0);
     char *home;
 
     if (!user) {
@@ -228,7 +228,7 @@ char* path_cwd(void) {
 }
 
 char* path_basename(char *path) {
-    path = path_norm(path);
+    path = strdup(path);
 
     if (!path) {
         return NULL;
@@ -242,7 +242,7 @@ char* path_basename(char *path) {
 }
 
 char* path_parent(char *path) {
-    path = path_norm(path);
+    path = strdup(path);
 
     if (!path) {
         return NULL;
@@ -313,36 +313,153 @@ int path_eq(char *path, char *other) {
     return strcmp(path, other) == 0;
 }
 
-int path_exists(char *path) {
-    struct stat st;
-    char *norm = path_norm(path);
-
-    if (!norm) {
-        return 0;
-    }
-
-    int exists = stat(norm, &st) == 0;
-    free(norm);
-    return exists;
+int path_is_abs(char *path) {
+    return regex_starts_with(path, "/");
 }
 
-int path_is_abs(char *path) {
-    char *norm = path_norm(path);
+struct stat* path_stat(char *path) {
+    struct stat *st = malloc(sizeof(struct stat));
 
-    if (!norm) {
+    if (!st) {
+        return NULL;
+    } else if (stat(path, st)) {
+        free(st);
+        return NULL;
+    } else {
+        return st;
+    }
+}
+
+int path_exists(char *path) {
+    struct stat *st = path_stat(path);
+
+    if (!st) {
         return 0;
     }
 
-    int is_abs = regex_starts_with(norm, "/");
-    free(norm);
-    return is_abs;
+    free(st);
+    return 1;
+}
+
+int path_is_dir(char *path) {
+    struct stat *st = path_stat(path);
+
+    if (!st) {
+        return 0;
+    }
+
+    int is_dir = S_ISDIR(st->st_mode);
+    free(st);
+    return is_dir;
+}
+
+int path_is_file(char *path) {
+    struct stat *st = path_stat(path);
+
+    if (!st) {
+        return 0;
+    }
+
+    int is_file = S_ISREG(st->st_mode);
+    free(st);
+    return is_file;
+}
+
+static rp_t* append_entry_path(rp_t **self, char *path, struct dirent *entry) {
+    char *entry_path = path_join(path, entry->d_name);
+
+    if (!entry_path) {
+        return NULL;
+    }
+
+    rp_t *new_item = rp_append(self, entry_path);
+
+    if (!new_item) {
+        free(entry_path);
+        return NULL;
+    }
+
+    return new_item;
+}
+
+rp_t* path_list_dir(char *path) {
+    path = path_norm(path);
+
+    if (!path) {
+        return NULL;
+    } else if (!path_is_dir(path)) {
+        free(path);
+        return NULL;
+    }
+
+    DIR *dir = opendir(path);
+
+    if (!dir) {
+        free(path);
+        return NULL;
+    }
+
+    rp_t *dir_list = NULL;
+    struct dirent *entry;
+
+    for (entry = readdir(dir); entry; entry = readdir(dir)) {
+        if (path_eq(entry->d_name, ".") || path_eq(entry->d_name, "..")) {
+            continue;
+        } else if (!append_entry_path(&dir_list, path, entry)) {
+            break;
+        }
+    }
+
+    free(path);
+
+    if (closedir(dir)) {
+        rp_deep_free(&dir_list);
+        return NULL;
+    };
+
+    return dir_list;
+}
+
+char* path_random_file(char *path) {
+    rp_t *dir_list = path_list_dir(path);
+
+    if (!dir_list) {
+        return NULL;
+    }
+
+    char *new_path = NULL;
+
+    for (new_path = rp_pop_random(&dir_list); new_path; new_path = rp_pop_random(&dir_list)) {
+        if (path_is_file(new_path)) {
+            break;
+        }
+
+        free(new_path);
+    }
+
+    rp_deep_free(&dir_list);
+    return new_path;
 }
 
 int path_open_write(char *path) {
     int flags = O_CREAT | O_WRONLY | O_TRUNC;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    return open(path, flags, mode);
+    int fd = open(path, flags, mode);
+    return fd;
 }
+
+int path_touch(char *path) {
+    int fd = path_open_write(path);
+
+    if (fd < 0) {
+        return 1;
+    } else if (close(fd)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 
 int path_mkdir(char *path, int mode, int mk_flags) {
     path = path_abspath(path);
@@ -366,7 +483,7 @@ int path_mkdir(char *path, int mode, int mk_flags) {
     }
 
     char *parent = path_parent(path);
-    parent_failed = path_mkdir(parent, mode, MK_EXISTS_OK | mk_flags);
+    parent_failed = path_mkdir(parent, mode, mk_flags);
     free(parent);
 
     if (parent_failed) {

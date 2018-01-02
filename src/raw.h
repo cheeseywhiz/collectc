@@ -6,8 +6,9 @@
 #include "random_popper.h"
 
 enum raw_flags {
-    FAIL = 0,
-    NO_REPEAT = 1 << 0
+    RAW_NO_REPEAT = 1 << 0,
+    RAW_RANDOM = 1 << 1,
+    RAW_DOWNLOAD = 1 << 2,
 };
 
 struct raw_post {
@@ -25,21 +26,18 @@ int raw_post_download(struct raw_post *self);
 struct raw_base_listing {
     ju_json_t *json;
     rp_t *popper;
-    struct response *re;
 };
 
 typedef struct {
     char *path;
+    struct response *re;
     struct raw_base_listing *iter;
+    int free_json;
 } raw_listing;
 
-raw_listing* raw_new_listing(char *path, char *url);
+raw_listing* raw_listing_data(char *path, ju_json_t *json);
+raw_listing* raw_listing_url(char *path, char *url);
 void raw_free_listing(raw_listing *self);
-struct raw_post* raw_listing_next(raw_listing *self);
-struct raw_post* raw_listing_next_download(raw_listing *self);
-struct raw_post* raw_listing_next_no_repeat(raw_listing *self);
-struct raw_post* raw_listing_next_no_repeat_download(raw_listing *self);
-struct raw_post* raw_listing_flags_next_download(raw_listing *self, int flags);
-char* raw_listing_flags_next_recover(raw_listing *self, int flags);
+struct raw_post* raw_listing_next(raw_listing *self, int flags);
 
 #endif

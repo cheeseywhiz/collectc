@@ -1,9 +1,7 @@
 #ifndef RAND_H
 #define RAND_H
 
-#include <limits.h>
-#define URAND_MAX UINT_MAX
-unsigned int urandom_number(void);
+void rand_reseed(void);
 
 typedef struct {
     int *items;
