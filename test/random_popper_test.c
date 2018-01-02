@@ -5,7 +5,7 @@
 #include "random_popper.h"
 #include "test.h"
 
-TEST_CASE test_append(rp_t **popper) {
+SMALL_TEST test_append(rp_t **popper) {
     SCORE_INIT();
 
     for (int i = 0; i < 10; i++) {
@@ -15,13 +15,13 @@ TEST_CASE test_append(rp_t **popper) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_len(rp_t **popper) {
+SMALL_TEST test_len(rp_t **popper) {
     SCORE_INIT();
     ASSERT(rp_len(popper) == 10);
     RETURN_SCORE();
 }
 
-TEST_CASE test_get_index(rp_t **popper) {
+SMALL_TEST test_get_index(rp_t **popper) {
     SCORE_INIT();
     int n_cases = 4;
     int cases[] = {1, 3, 5, 8};
@@ -35,14 +35,14 @@ TEST_CASE test_get_index(rp_t **popper) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_last(rp_t **popper) {
+SMALL_TEST test_last(rp_t **popper) {
     SCORE_INIT();
     int *value = rp_last(popper)->data;
     ASSERT(*value == 9);
     RETURN_SCORE();
 }
 
-TEST_CASE test_pop_index(rp_t **popper) {
+SMALL_TEST test_pop_index(rp_t **popper) {
     SCORE_INIT();
     int index = 4;
     size_t length = rp_len(popper);
@@ -54,7 +54,7 @@ TEST_CASE test_pop_index(rp_t **popper) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_pop_random(rp_t **popper) {
+SMALL_TEST test_pop_random(rp_t **popper) {
     SCORE_INIT();
     size_t length = rp_len(popper);
     int *elem_num;
@@ -70,7 +70,7 @@ TEST_CASE test_pop_random(rp_t **popper) {
     RETURN_SCORE();
 }
 
-TEST_CASE null_check(rp_t **popper) {
+SMALL_TEST null_check(rp_t **popper) {
     SCORE_INIT();
     int i = 0;
     rp_t *element;
@@ -84,15 +84,15 @@ TEST_CASE null_check(rp_t **popper) {
     RETURN_SCORE();
 }
 
-TEST_MOD rp_test_main(void) {
+BIG_TEST rp_test_main(void) {
     SCORE_INIT();
     rp_t *popper = NULL;
-    FUNCTION_REPORT("rp_append(0..9)", test_append(&popper));
-    FUNCTION_REPORT("rp_len()", test_len(&popper));
-    FUNCTION_REPORT("rp_get_index()", test_get_index(&popper));
-    FUNCTION_REPORT("rp_last()", test_last(&popper));
-    FUNCTION_REPORT("rp_pop_index()", test_pop_index(&popper));
-    FUNCTION_REPORT("rp_pop_random()", test_pop_random(&popper));
-    FUNCTION_REPORT("popper NULL check", null_check(&popper));
+    SMALL_REPORT("rp_append()", test_append(&popper));
+    SMALL_REPORT("rp_len()", test_len(&popper));
+    SMALL_REPORT("rp_get_index()", test_get_index(&popper));
+    SMALL_REPORT("rp_last()", test_last(&popper));
+    SMALL_REPORT("rp_pop_index()", test_pop_index(&popper));
+    SMALL_REPORT("rp_pop_random()", test_pop_random(&popper));
+    SMALL_REPORT("popper NULL check", null_check(&popper));
     RETURN_SCORE();
 }

@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "raw.h"
 #include "path.h"
+#include "rand.h"
 
 int main(int argc, char **argv) {
+    rand_reseed();
     char *reddit_url;
 
     if (argc < 2) {
@@ -21,7 +24,7 @@ int main(int argc, char **argv) {
     }
 
     if (!strcmp(reddit_url, "random")) {
-        char *path = path_random(dir);
+        char *path = path_random_file(dir);
         free(dir);
 
         if (!path) {
@@ -40,7 +43,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct raw_post *post = raw_listing_flags_next_download(posts, RAW_NO_REPEAT);
+    int flags = RAW_NO_REPEAT | RAW_RANDOM | RAW_DOWNLOAD;
+    struct raw_post *post = raw_listing_next(posts, flags);
 
     if (!post) {
         raw_free_listing(posts);

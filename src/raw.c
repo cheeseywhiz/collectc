@@ -1,5 +1,4 @@
-#include <unistd.h>
-#include <errno.h>
+#include <stdlib.h>
 
 #include "raw.h"
 #include "path.h"
@@ -23,15 +22,14 @@ struct raw_post* raw_new_post(char *parent_path, ju_json_t *json, int index) {
     }
 
     self->url = url;
-    char *path = path_url_fname(parent_path, self->url);
+    self->path = path_url_fname(parent_path, self->url);
 
-    if (!path) {
+    if (!self->path) {
         free(self->url);
         free(self);
         return NULL;
     }
 
-    self->path = path;
     return self;
 }
 
@@ -46,7 +44,7 @@ char* raw_post_data_get(struct raw_post *self, char *key) {
     int index = ju_object_get(self->json, self->index, key);
 
     if (index < 0) {
-        return calloc(1, 1);
+        return NULL;
     }
 
     jsmntok_t tok = self->json->tokens[index];
@@ -60,7 +58,9 @@ int raw_post_download(struct raw_post *self) {
         return -1;
     }
 
-    return get_download_response(re, self->path);
+    int result = get_download_response(re, self->path);
+    free_response(re);
+    return result;
 }
 
 static struct raw_base_listing* new_base_listing(ju_json_t *json) {
@@ -91,12 +91,17 @@ static struct raw_base_listing* new_base_listing(ju_json_t *json) {
 
 static void free_base_listing(struct raw_base_listing *self) {
     rp_deep_free(&self->popper);
-    ju_free(self->json);
     free(self);
 }
 
-static int base_listing_next(struct raw_base_listing *self) {
-    int *iter_next = rp_pop_random(&self->popper);
+static int base_listing_next(struct raw_base_listing *self, int random) {
+    int *iter_next;
+
+    if (random) {
+        iter_next = rp_pop_random(&self->popper);
+    } else {
+        iter_next = rp_pop_index(&self->popper, 0);
+    }
 
     if (!iter_next) {
         return -1;
@@ -129,6 +134,7 @@ raw_listing* raw_listing_data(char *path, ju_json_t *json) {
         return NULL;
     }
 
+    self->free_json = 0;
     return self;
 }
 
@@ -155,10 +161,15 @@ raw_listing* raw_listing_url(char *path, char *url) {
     }
 
     self->re = re;
+    self->free_json = 1;
     return self;
 }
 
 void raw_free_listing(raw_listing *self) {
+    if (self->free_json) {
+        ju_free(self->iter->json);
+    }
+
     free_base_listing(self->iter);
 
     if (self->re) {
@@ -169,8 +180,8 @@ void raw_free_listing(raw_listing *self) {
     free(self);
 }
 
-struct raw_post* raw_listing_next(raw_listing *self) {
-    int iter_next = base_listing_next(self->iter);
+static struct raw_post* listing_next_post(raw_listing *self, int random) {
+    int iter_next = base_listing_next(self->iter, random);
 
     if (iter_next < 0) {
         return NULL;
@@ -178,16 +189,18 @@ struct raw_post* raw_listing_next(raw_listing *self) {
 
     struct raw_post *post = raw_new_post(self->path, self->iter->json, iter_next);
 
-    if (path_eq(self->path, post->path)) {
+    if (!post) {
+        return NULL;
+    } else if (path_eq(self->path, post->path)) {
         raw_free_post(post);
-        return raw_listing_next(self);
+        return listing_next_post(self, random);
     } else {
         return post;
     }
 }
 
-struct raw_post* raw_listing_next_download(raw_listing *self) {
-    struct raw_post *post = raw_listing_next(self);
+static struct raw_post* listing_next_download(raw_listing *self, int random) {
+    struct raw_post *post = listing_next_post(self, random);
 
     if (!post) {
         return NULL;
@@ -203,15 +216,15 @@ struct raw_post* raw_listing_next_download(raw_listing *self) {
         return post;
     } else if (download_ret < 0) {
         raw_free_post(post);
-        return raw_listing_next_download(self);
+        return listing_next_download(self, random);
     } else {
         raw_free_post(post);
         return NULL;
     }
 }
 
-struct raw_post* raw_listing_next_no_repeat(raw_listing *self) {
-    struct raw_post *post = raw_listing_next(self);
+static struct raw_post* listing_next_no_repeat(raw_listing *self, int random) {
+    struct raw_post *post = listing_next_post(self, random);
 
     if (!post) {
         return NULL;
@@ -219,14 +232,14 @@ struct raw_post* raw_listing_next_no_repeat(raw_listing *self) {
 
     if (path_exists(post->path)) {
         raw_free_post(post);
-        return raw_listing_next_no_repeat(self);
+        return listing_next_no_repeat(self, random);
     } else {
         return post;
     }
 }
 
-struct raw_post* raw_listing_next_no_repeat_download(raw_listing *self) {
-    struct raw_post *post = raw_listing_next_no_repeat(self);
+static struct raw_post* listing_next_no_repeat_download(raw_listing *self, int random) {
+    struct raw_post *post = listing_next_no_repeat(self, random);
 
     if (!post) {
         return NULL;
@@ -238,17 +251,28 @@ struct raw_post* raw_listing_next_no_repeat_download(raw_listing *self) {
         return post;
     } else if (download_ret < 0) {
         raw_free_post(post);
-        return raw_listing_next_no_repeat_download(self);
+        return listing_next_no_repeat_download(self, random);
     } else {
         raw_free_post(post);
         return NULL;
     }
 }
 
-struct raw_post* raw_listing_flags_next_download(raw_listing *self, int flags) {
+static void* next_func(int flags) {
     if (flags & RAW_NO_REPEAT) {
-        return raw_listing_next_no_repeat_download(self);
-    } else {
-        return raw_listing_next_download(self);
+        if (flags & RAW_DOWNLOAD) {
+            return listing_next_no_repeat_download;
+        }
+
+        return listing_next_no_repeat;
+    } else if (flags & RAW_DOWNLOAD) {
+        return listing_next_download;
     }
+
+    return listing_next_post;
+}
+
+struct raw_post* raw_listing_next(raw_listing *self, int flags) {
+    void* (*next)(raw_listing *self, ...) = next_func(flags);
+    return next(self, flags & RAW_RANDOM);
 }

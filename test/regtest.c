@@ -12,7 +12,7 @@ struct case_starts_with {
     int expected;
 };
 
-TEST_CASE test_starts_with(void) {
+SMALL_TEST test_starts_with(void) {
     SCORE_INIT();
     int n_cases = 4;
     struct case_starts_with cases[] = {
@@ -31,7 +31,7 @@ TEST_CASE test_starts_with(void) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_ends_with(void) {
+SMALL_TEST test_ends_with(void) {
     SCORE_INIT();
     int n_cases = 5;
     struct case_starts_with cases[] = {
@@ -57,7 +57,7 @@ struct case_find {
     size_t expected;
 };
 
-TEST_CASE test_find(void) {
+SMALL_TEST test_find(void) {
     SCORE_INIT();
     int n_cases = 3;
     struct case_find cases[] = {
@@ -81,7 +81,7 @@ struct case_remove {
     char *expected;
 };
 
-TEST_CASE test_remove(void) {
+SMALL_TEST test_remove(void) {
     SCORE_INIT();
     int n_cases = 4;
     struct case_remove cases[] = {
@@ -106,7 +106,7 @@ struct case_remove_first_pattern {
     char *expected;
 };
 
-TEST_CASE test_remove_first_pattern(void) {
+SMALL_TEST test_remove_first_pattern(void) {
     SCORE_INIT();
     char *pattern = "([^/]*/\\.\\./?)";
     int n_cases = 3;
@@ -131,7 +131,7 @@ struct case_match {
     char *expected;
 };
 
-TEST_CASE test_match_one_subexpr(void) {
+SMALL_TEST test_match_one_subexpr(void) {
     SCORE_INIT();
     int n_cases = 4;
     char *pattern = "\\([0-9]{3}\\)-[0-9]{3}-([0-9]{4})";
@@ -158,7 +158,7 @@ struct case_contains {
     int expected;
 };
 
-TEST_CASE test_contains(void) {
+SMALL_TEST test_contains(void) {
     SCORE_INIT();
     int n_cases = 5;
     struct case_contains cases[] = {
@@ -184,7 +184,7 @@ struct case_str_slice {
     char *expected;
 };
 
-TEST_CASE test_str_slice(void) {
+SMALL_TEST test_str_slice(void) {
     SCORE_INIT();
     int n_cases = 7;
     char *string = "hello world";
@@ -221,7 +221,7 @@ struct case_url_fname {
     char *expected;
 };
 
-TEST_CASE test_url_fname(void) {
+SMALL_TEST test_url_fname(void) {
     SCORE_INIT();
     int n_cases = 4;
     struct case_url_fname cases[] = {
@@ -246,16 +246,16 @@ TEST_CASE test_url_fname(void) {
     RETURN_SCORE();
 }
 
-TEST_MOD regex_test_main(void) {
+BIG_TEST regex_test_main(void) {
     SCORE_INIT();
-    FUNCTION_REPORT("regex_starts_with()", test_starts_with());
-    FUNCTION_REPORT("regex_ends_with()", test_ends_with());
-    FUNCTION_REPORT("regex_str_slice()", test_str_slice());
-    FUNCTION_REPORT("regex_find()", test_find());
-    FUNCTION_REPORT("regex_remove()", test_remove());
-    FUNCTION_REPORT("regex_remove_first_pattern()", test_remove_first_pattern());
-    FUNCTION_REPORT("regex_match_one_subexpr()", test_match_one_subexpr());
-    FUNCTION_REPORT("regex_contains()", test_contains());
-    FUNCTION_REPORT("regex_url_fname()", test_url_fname());
+    SMALL_REPORT("regex_starts_with()", test_starts_with());
+    SMALL_REPORT("regex_ends_with()", test_ends_with());
+    SMALL_REPORT("regex_str_slice()", test_str_slice());
+    SMALL_REPORT("regex_find()", test_find());
+    SMALL_REPORT("regex_remove()", test_remove());
+    SMALL_REPORT("regex_remove_first_pattern()", test_remove_first_pattern());
+    SMALL_REPORT("regex_match_one_subexpr()", test_match_one_subexpr());
+    SMALL_REPORT("regex_contains()", test_contains());
+    SMALL_REPORT("regex_url_fname()", test_url_fname());
     RETURN_SCORE();
 }

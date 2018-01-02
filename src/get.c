@@ -1,7 +1,9 @@
 #include <curl/curl.h>
+#include <stdlib.h>
 #include <regex.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "get.h"
@@ -109,7 +111,7 @@ struct response* get_response(char *url) {
     };
 
     char *pattern = "content-type:[ ]*([^\r\n]*)";
-    char *match = regex_match_one_subexpr(pattern, hd_buf->content, REG_EXTENDED | REG_ICASE);
+    char *match = regex_match_one_subexpr(pattern, hd_buf->content, REG_ICASE);
 
     if (!match) {
         match = calloc(1, 1);
@@ -189,6 +191,7 @@ struct response* get_image(char *url) {
     } else if (verify_image(self)) {
         return self;
     } else {
+        free_response(self);
         return NULL;
     }
 }

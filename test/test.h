@@ -1,15 +1,15 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include <unistd.h>
+#include <stdio.h>
 
 struct score {
     size_t passing;
     size_t failing;
 };
 
-#define TEST_MOD struct score
-#define TEST_CASE static struct score
+#define BIG_TEST struct score
+#define SMALL_TEST static struct score
 
 #define SCORE(pass, fail) \
     (struct score) { \
@@ -25,9 +25,11 @@ struct score {
 #define PASS() PASSING++
 #define FAIL() FAILING++
 #define ASSERT(bool) if (bool) PASS(); else FAIL()
+#define ADD_PASS(n) PASSING += n
+#define ADD_FAIL(n) FAILING +=n
 #define ADD_SCORE(pass, fail) \
-    PASSING += pass; \
-    FAILING += fail
+    ADD_PASS(pass); \
+    ADD_PASS(fail)
 #define SUBSCORE(score) \
     subscore = score; \
     ADD_SCORE(subscore.passing, subscore.failing)
@@ -36,25 +38,25 @@ struct score {
     ADD_SCORE(0, n_cases - PASSING); \
     RETURN_SCORE()
 
-#define REPORT_STR "%s:\nPass: %ld\nFail: %ld\n"
-#define FUNCTION_REPORT(name, score) \
-    SUBSCORE(score); \
-    printf(REPORT_STR, name, subscore.passing, subscore.failing)
+#define REPORT_SCORE(passing, failing) printf("Pass: %ld\nFail: %ld\n", passing, failing)
+#define REPORT_SUBSCORE() REPORT_SCORE(subscore.passing, subscore.failing)
+#define REPORT_CURRENT() REPORT_SCORE(PASSING, FAILING)
 
-#define MODULE_REPORT_STR "%s summary:\nPass: %ld\nFail: %ld\n\n"
-#define MODULE_REPORT(name, score) \
+#define SMALL_REPORT(name, score) \
     printf("%s:\n", name); \
     SUBSCORE(score); \
-    printf(MODULE_REPORT_STR, name, subscore.passing, subscore.failing)
+    REPORT_SUBSCORE()
+
+#define BIG_REPORT(name, score) \
+    printf("%s:\n", name); \
+    SUBSCORE(score); \
+    printf("%s summary:\n", name); \
+    REPORT_SUBSCORE(); \
+    printf("\n");
 
 #define MAIN_EXIT() \
-    printf(REPORT_STR, "test summary", PASSING, FAILING); \
+    printf("test summary:\n"); \
+    REPORT_CURRENT(); \
     return FAILING
-
-TEST_MOD rand_test_main(void);
-TEST_MOD ju_test_main(void);
-TEST_MOD regex_test_main(void);
-TEST_MOD path_test_main(void);
-TEST_MOD rp_test_main(void);
 
 #endif

@@ -3,7 +3,7 @@
 #include "rand.h"
 #include "test.h"
 
-TEST_CASE test_randbelow(int n, int below) {
+SMALL_TEST test_randbelow(int n, int below) {
     SCORE_INIT();
     printf("[");
     int rand;
@@ -18,8 +18,8 @@ TEST_CASE test_randbelow(int n, int below) {
     RETURN_SCORE();
 }
 
-TEST_MOD rand_test_main(void) {
+BIG_TEST rand_test_main(void) {
     SCORE_INIT();
-    FUNCTION_REPORT("randbelow()", test_randbelow(25, 10));
+    SMALL_REPORT("randbelow()", test_randbelow(25, 10));
     RETURN_SCORE();
 }

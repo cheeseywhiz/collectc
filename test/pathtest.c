@@ -9,7 +9,7 @@ struct path_case {
     char *expected;
 };
 
-TEST_CASE test_norm(void) {
+SMALL_TEST test_norm(void) {
     SCORE_INIT();
     int n_cases = 23;
     struct path_case cases[] = {
@@ -57,7 +57,7 @@ TEST_CASE test_norm(void) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_basename(void) {
+SMALL_TEST test_basename(void) {
     SCORE_INIT();
     int n_cases = 5;
     struct path_case cases[] = {
@@ -70,15 +70,17 @@ TEST_CASE test_basename(void) {
 
     for (int i = 0; i < n_cases; i++) {
         struct path_case case_ = cases[i];
-        char *actual = path_basename(case_.path);
+        char *case_norm = path_norm(case_.path);
+        char *actual = path_basename(case_norm);
         ASSERT(path_eq(case_.expected, actual));
+        free(case_norm);
         free(actual);
     }
 
     RETURN_SCORE();
 }
 
-TEST_CASE test_exists_true(void) {
+SMALL_TEST test_exists_true(void) {
     SCORE_INIT();
     int n_cases = 6;
     char *cwd = path_cwd();
@@ -92,15 +94,16 @@ TEST_CASE test_exists_true(void) {
     };
 
     for (int i = 0; i < n_cases; i++) {
-        char *case_ = cases[i];
+        char *case_ = path_norm(cases[i]);
         ASSERT(path_exists(case_));
+        free(case_);
     }
 
     free(cwd);
     RETURN_SCORE();
 }
 
-TEST_CASE test_exists_false(void) {
+SMALL_TEST test_exists_false(void) {
     SCORE_INIT();
     int n_cases = 3;
     char *cwd = path_cwd();
@@ -113,8 +116,9 @@ TEST_CASE test_exists_false(void) {
     };
 
     for (int i = 0; i < n_cases; i++) {
-        char *case_ = cases[i];
+        char *case_ = path_norm(cases[i]);
         ASSERT(!path_exists(case_));
+        free(case_);
     }
 
     free(dne);
@@ -122,7 +126,14 @@ TEST_CASE test_exists_false(void) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_is_abs_true(void) {
+SMALL_TEST test_exists(void) {
+    SCORE_INIT();
+    SUBSCORE(test_exists_true());
+    SUBSCORE(test_exists_false());
+    RETURN_SCORE();
+}
+
+SMALL_TEST test_is_abs_true(void) {
     SCORE_INIT();
     int n_cases = 4;
     char *cases[] = {
@@ -133,14 +144,15 @@ TEST_CASE test_is_abs_true(void) {
     };
 
     for (int i = 0; i < n_cases; i++) {
-        char *case_ = cases[i];
+        char *case_ = path_norm(cases[i]);
         ASSERT(path_is_abs(case_));
+        free(case_);
     }
 
     RETURN_SCORE();
 }
 
-TEST_CASE test_is_abs_false(void) {
+SMALL_TEST test_is_abs_false(void) {
     SCORE_INIT();
     int n_cases = 3;
     char *cases[] = {
@@ -150,10 +162,18 @@ TEST_CASE test_is_abs_false(void) {
     };
 
     for (int i = 0; i < n_cases; i++) {
-        char *case_ = cases[i];
+        char *case_ = path_norm(cases[i]);
         ASSERT(!path_is_abs(case_));
+        free(case_);
     }
 
+    RETURN_SCORE();
+}
+
+SMALL_TEST test_is_abs(void) {
+    SCORE_INIT();
+    SUBSCORE(test_is_abs_true());
+    SUBSCORE(test_is_abs_false());
     RETURN_SCORE();
 }
 
@@ -163,7 +183,7 @@ struct case_url_fname {
     char *expected;
 };
 
-TEST_CASE test_url_fname(void) {
+SMALL_TEST test_url_fname(void) {
     SCORE_INIT();
     int n_cases = 3;
     struct case_url_fname cases[] = {
@@ -188,7 +208,7 @@ TEST_CASE test_url_fname(void) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_parent(void) {
+SMALL_TEST test_parent(void) {
     SCORE_INIT();
     int n_cases = 6;
     struct path_case cases[] = {
@@ -202,9 +222,11 @@ TEST_CASE test_parent(void) {
 
     for (int i = 0; i < n_cases; i++) {
         struct path_case case_ = cases[i];
-        char *actual = path_parent(case_.path);
+        char *case_norm = path_norm(case_.path);
+        char *actual = path_parent(case_norm);
         ASSERT(path_eq(case_.expected, actual));
         free(actual);
+        free(case_norm);
     }
 
     RETURN_SCORE();
@@ -225,7 +247,7 @@ static int rp_contains_path(rp_t **self, char *path) {
     return 0;
 }
 
-TEST_CASE test_is_dir(void) {
+SMALL_TEST test_is_dir(void) {
     SCORE_INIT();
     int n_cases = 7;
     char *tmp = path_mktempd();
@@ -241,8 +263,9 @@ TEST_CASE test_is_dir(void) {
     };
 
     for (int i = 0; i < n_cases; i++) {
-        char *case_ = cases[i];
+        char *case_ = path_norm(cases[i]);
         ASSERT(path_is_dir(case_));
+        free(case_);
     }
 
     free(cwd);
@@ -250,7 +273,7 @@ TEST_CASE test_is_dir(void) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_list_dir_contains(rp_t **dir_list) {
+SMALL_TEST test_list_dir_contains(rp_t **dir_list) {
     SCORE_INIT();
     int n_cases = 4;
     char *cases[] = {
@@ -267,7 +290,7 @@ TEST_CASE test_list_dir_contains(rp_t **dir_list) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_list_dir_not_contains(rp_t **dir_list) {
+SMALL_TEST test_list_dir_not_contains(rp_t **dir_list) {
     SCORE_INIT();
     int n_cases = 4;
     char *cases[] = {
@@ -284,7 +307,29 @@ TEST_CASE test_list_dir_not_contains(rp_t **dir_list) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_list_dir(void) {
+SMALL_TEST test_is_file(void) {
+    SCORE_INIT();
+    int n_cases = 7;
+    char *cases[] = {
+        "Makefile",
+        ".gitignore",
+        ".travis.yml",
+        "src/main.c",
+        "src/path.c",
+        "test/pathtest.c",
+        "test/main.c",
+    };
+
+    for (int i = 0; i < n_cases; i ++) {
+        char *case_ = path_abspath(cases[i]);
+        ASSERT(path_is_file(case_));
+        free(case_);
+    }
+
+    RETURN_SCORE();
+}
+
+SMALL_TEST test_list_dir(void) {
     SCORE_INIT();
     rp_t *dir_list = path_list_dir("/dev");
     SUBSCORE(test_list_dir_contains(&dir_list));
@@ -299,7 +344,7 @@ struct case_join {
     char *expected;
 };
 
-TEST_CASE test_join(void) {
+SMALL_TEST test_join(void) {
     SCORE_INIT();
     int n_cases = 11;
     struct case_join cases[] = {
@@ -319,12 +364,6 @@ TEST_CASE test_join(void) {
     for (int i = 0; i < n_cases; i++) {
         struct case_join case_ = cases[i];
         char *actual = path_join(case_.path, case_.other);
-
-        if (!actual) {
-            FAIL();
-            continue;
-        }
-
         int eq = path_eq(case_.expected, actual);
         ASSERT(eq);
         if (!eq) printf("\"%s\"\t\"%s\"\t\"%s\"\t\"%s\"\n", case_.path, case_.other, case_.expected, actual);
@@ -334,20 +373,21 @@ TEST_CASE test_join(void) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_mkdir_none(char *prefix, char **cases, int n_cases) {
+SMALL_TEST test_mkdir_none(char *prefix, char **cases, int n_cases) {
     SCORE_INIT();
 
     for (int i = 0; i < n_cases; i++) {
         char *case_dir = cases[i];
         char *case_ = path_join(prefix, case_dir);
         ASSERT(!path_mkdir(case_, MK_MODE_755, 0));
+        ASSERT(path_exists(case_));
         free(case_);
     }
 
     RETURN_SCORE();
 }
 
-TEST_CASE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
+SMALL_TEST test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
     SCORE_INIT();
 
     for (int i = 0; i < n_cases; i++) {
@@ -360,7 +400,7 @@ TEST_CASE test_mkdir_exists_ok(char *prefix, char **cases, int n_cases) {
     RETURN_SCORE();
 }
 
-TEST_CASE test_mkdir_parent(char *prefix) {
+SMALL_TEST test_mkdir_parent(char *prefix) {
     SCORE_INIT();
     int n_cases = 3;
     char *cases[] = {
@@ -373,16 +413,15 @@ TEST_CASE test_mkdir_parent(char *prefix) {
         char *case_dir = cases[i];
         char *case_ = path_join(prefix, case_dir);
         ASSERT(!path_mkdir(case_, MK_MODE_755, MK_PARENTS));
+        ASSERT(path_exists(case_));
         free(case_);
     }
 
     RETURN_SCORE();
 }
 
-TEST_CASE test_mkdir(void) {
+SMALL_TEST test_mkdir(void) {
     SCORE_INIT();
-    char *prefix1 = path_mktempd();
-    char *prefix2 = path_mktempd();
     int n_cases = 3;
     char *cases[] = {
         "dir1",
@@ -390,27 +429,28 @@ TEST_CASE test_mkdir(void) {
         "dir3",
     };
 
-    SUBSCORE(test_mkdir_none(prefix1, cases, n_cases));
-    SUBSCORE(test_mkdir_exists_ok(prefix1, cases, n_cases));
-    SUBSCORE(test_mkdir_parent(prefix2));
-    free(prefix1);
-    free(prefix2);
+    char *prefix = path_mktempd();
+    SUBSCORE(test_mkdir_none(prefix, cases, n_cases));
+    SUBSCORE(test_mkdir_exists_ok(prefix, cases, n_cases));
+    free(prefix);
+    prefix = path_mktempd();
+    SUBSCORE(test_mkdir_parent(prefix));
+    free(prefix);
     RETURN_SCORE();
 };
 
-TEST_MOD path_test_main(void) {
+BIG_TEST path_test_main(void) {
     SCORE_INIT();
-    FUNCTION_REPORT("path_norm()", test_norm());
-    FUNCTION_REPORT("path_basename()", test_basename());
-    FUNCTION_REPORT("path_exists()", test_exists_true());
-    FUNCTION_REPORT("!path_exists()", test_exists_false());
-    FUNCTION_REPORT("path_is_abs()", test_is_abs_true());
-    FUNCTION_REPORT("!path_is_abs()", test_is_abs_false());
-    FUNCTION_REPORT("path_is_dir()", test_is_dir());
-    FUNCTION_REPORT("path_list_dir()", test_list_dir());
-    FUNCTION_REPORT("path_parent()", test_parent());
-    FUNCTION_REPORT("path_join()", test_join());
-    FUNCTION_REPORT("path_url_fname()", test_url_fname());
-    FUNCTION_REPORT("path_mkdir()", test_mkdir());
+    SMALL_REPORT("path_norm()", test_norm());
+    SMALL_REPORT("path_basename()", test_basename());
+    SMALL_REPORT("path_exists()", test_exists());
+    SMALL_REPORT("path_is_abs()", test_is_abs());
+    SMALL_REPORT("path_is_dir()", test_is_dir());
+    SMALL_REPORT("path_is_file()", test_is_file());
+    SMALL_REPORT("path_list_dir()", test_list_dir());
+    SMALL_REPORT("path_parent()", test_parent());
+    SMALL_REPORT("path_join()", test_join());
+    SMALL_REPORT("path_url_fname()", test_url_fname());
+    SMALL_REPORT("path_mkdir()", test_mkdir());
     RETURN_SCORE();
 }
