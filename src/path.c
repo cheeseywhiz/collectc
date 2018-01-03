@@ -414,7 +414,7 @@ rp_t* path_list_dir(char *path) {
     free(path);
 
     if (closedir(dir)) {
-        rp_deep_free(&dir_list);
+        rp_deep_free(&dir_list, free);
         return NULL;
     };
 
@@ -438,7 +438,7 @@ char* path_random_file(char *path) {
         free(new_path);
     }
 
-    rp_deep_free(&dir_list);
+    rp_deep_free(&dir_list, free);
 
     if (!new_path) {
         ERROR("No suitable files: %s", path);

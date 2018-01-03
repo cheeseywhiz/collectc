@@ -8,9 +8,11 @@ typedef struct rp_node {
     struct rp_node *next;
 } rp_t;
 
+typedef void (*rp_free_func)(void *ptr);
+
 rp_t* rp_new(void *data);
 void rp_shallow_free(rp_t **self);
-void rp_deep_free(rp_t **self);
+void rp_deep_free(rp_t **self, rp_free_func free_data);
 rp_t* rp_second_to_last(rp_t **self);
 rp_t* rp_last(rp_t **self);
 rp_t* rp_append(rp_t **self, void *data);

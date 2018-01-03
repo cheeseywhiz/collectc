@@ -111,7 +111,7 @@ static struct raw_base_listing* new_base_listing(ju_json_t *json) {
 }
 
 static void free_base_listing(struct raw_base_listing *self) {
-    rp_deep_free(&self->popper);
+    rp_deep_free(&self->popper, free);
     free(self);
 }
 
@@ -156,6 +156,7 @@ raw_listing* raw_listing_data(char *path, ju_json_t *json) {
     }
 
     self->free_json = 0;
+    self->existing_paths = NULL;
     return self;
 }
 
@@ -187,6 +188,8 @@ raw_listing* raw_listing_url(char *path, char *url) {
 }
 
 void raw_free_listing(raw_listing *self) {
+    rp_deep_free(&self->existing_paths, raw_free_post);
+
     if (self->free_json) {
         ju_free(self->iter->json);
     }

@@ -51,7 +51,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
     struct ju_array_iter *iter = ju_array_init(self, object);
     
     if (!iter) {
-        return JU_ETYPE;
+        return -1;
     }
     
     int i;
@@ -75,7 +75,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
     }
 
     free(iter);
-    return JU_ENO_MATCH;
+    return -1;
 }
 
 struct ju_array_iter* ju_array_init(ju_json_t *self, int array_i) {

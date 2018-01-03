@@ -10,11 +10,6 @@ typedef struct {
     int n_tokens;
 } ju_json_t;
 
-enum key_error {
-    JU_ETYPE = -1,
-    JU_ENO_MATCH = -2
-};
-
 ju_json_t* ju_parse(char *json_str);
 void ju_free(ju_json_t *self);
 

@@ -333,7 +333,7 @@ SMALL_TEST test_list_dir(void) {
     rp_t *dir_list = path_list_dir("/dev");
     SUBSCORE(test_list_dir_contains(&dir_list));
     SUBSCORE(test_list_dir_not_contains(&dir_list));
-    rp_deep_free(&dir_list);
+    rp_deep_free(&dir_list, free);
     RETURN_SCORE();
 }
 

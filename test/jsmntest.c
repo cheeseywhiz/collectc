@@ -56,7 +56,7 @@ SMALL_TEST test_array_rp(ju_json_t *json) {
         ASSERT(expected == *actual);
     }
 
-    rp_deep_free(&popper);
+    rp_deep_free(&popper, free);
     RETURN_SCORE();
 }
 

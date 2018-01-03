@@ -25,13 +25,13 @@ void rp_shallow_free(rp_t **self) {
     }
 }
 
-void rp_deep_free(rp_t **self) {
+void rp_deep_free(rp_t **self, rp_free_func free_data) {
     rp_t *item, *item_alias;
 
     for (item = *self; item;) {
         item_alias = item;
         item = item->next;
-        free(item_alias->data);
+        free_data(item_alias->data);
         free(item_alias);
     }
 }

@@ -34,6 +34,7 @@ typedef struct {
     struct response *re;
     struct raw_base_listing *iter;
     int free_json;
+    rp_t *existing_paths;
 } raw_listing;
 
 raw_listing* raw_listing_data(char *path, ju_json_t *json);
