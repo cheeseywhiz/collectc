@@ -7,6 +7,7 @@
 #include <string.h>
 #include <dirent.h>
 
+#include "log.h"
 #include "path.h"
 #include "reg.h"
 #include "random_popper.h"
@@ -438,6 +439,11 @@ char* path_random_file(char *path) {
     }
 
     rp_deep_free(&dir_list);
+
+    if (!new_path) {
+        ERROR("No suitable files: %s", path);
+    }
+
     return new_path;
 }
 

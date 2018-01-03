@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "log.h"
 #include "raw.h"
 #include "path.h"
 #include "get.h"
@@ -60,7 +61,27 @@ int raw_post_download(struct raw_post *self) {
 
     int result = get_download_response(re, self->path);
     free_response(re);
+
+    if (!result) {
+        DEBUG("Collected new image: %s", self->url);
+    }
+
     return result;
+}
+
+static void log_attribute(struct raw_post *self, char *key) {
+    char *value = raw_post_data_get(self, key);
+
+    if (!value) return;
+
+    LOG("%s: %s", key, value);
+    free(value);
+}
+
+void raw_post_log(struct raw_post *self) {
+    log_attribute(self, "title");
+    log_attribute(self, "permalink");
+    log_attribute(self, "url");
 }
 
 static struct raw_base_listing* new_base_listing(ju_json_t *json) {
@@ -194,9 +215,13 @@ static struct raw_post* listing_next_post(raw_listing *self, int random) {
     } else if (path_eq(self->path, post->path)) {
         raw_free_post(post);
         return listing_next_post(self, random);
-    } else {
-        return post;
     }
+
+    if (path_exists(post->path)) {
+        DEBUG("Already downloaded: %s", post->url);
+    }
+
+    return post;
 }
 
 static struct raw_post* listing_next_download(raw_listing *self, int random) {
@@ -274,5 +299,13 @@ static void* next_func(int flags) {
 
 struct raw_post* raw_listing_next(raw_listing *self, int flags) {
     void* (*next)(raw_listing *self, ...) = next_func(flags);
-    return next(self, flags & RAW_RANDOM);
+    struct raw_post *post = next(self, flags & RAW_RANDOM);
+
+    if (post) {
+        raw_post_log(post);
+    } else {
+        INFO("Collection failed: %s", self->re->url);
+    }
+
+    return post;
 }

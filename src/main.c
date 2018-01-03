@@ -2,11 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "raw.h"
-#include "path.h"
-#include "rand.h"
+#include "collect.h"
 
 int main(int argc, char **argv) {
+    SET_LOG_LEVEL(LOG_INFO);
     rand_reseed();
     char *reddit_url;
 
@@ -31,6 +30,7 @@ int main(int argc, char **argv) {
             return 1;
         }
 
+        LOG("file: %s", path);
         printf("%s\n", path);
         free(path);
         return 0;
@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    LOG("file: %s", post->path);
     printf("%s\n", post->path);
     raw_free_post(post);
     raw_free_listing(posts);

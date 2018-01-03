@@ -22,6 +22,7 @@ struct raw_post* raw_new_post(char *parent_path, ju_json_t *json, int index);
 void raw_free_post(struct raw_post *self);
 char* raw_post_data_get(struct raw_post *self, char *key);
 int raw_post_download(struct raw_post *self);
+void raw_post_log(struct raw_post *self);
 
 struct raw_base_listing {
     ju_json_t *json;

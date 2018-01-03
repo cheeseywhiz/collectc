@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "log.h"
 #include "config.h"
 #include "get.h"
 #include "reg.h"
@@ -177,6 +178,7 @@ static int verify_image(struct response *self) {
     }
 
     if (strlen(error_msg)) {
+        DEBUG("%s (%s) (%s)", error_msg, self->url, self->type);
         return 0;
     } else {
         return 1;

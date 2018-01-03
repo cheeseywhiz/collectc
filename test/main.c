@@ -1,4 +1,5 @@
 #include "rand.h"
+#include "log.h"
 #include "test.h"
 
 BIG_TEST rand_test_main(void);
@@ -9,6 +10,7 @@ BIG_TEST rp_test_main(void);
 BIG_TEST raw_test_main(void);
 
 int main(void) {
+    SET_LOG_LEVEL(LOG_INFO);
     rand_reseed();
     SCORE_INIT();
     BIG_REPORT("rand.c", rand_test_main());

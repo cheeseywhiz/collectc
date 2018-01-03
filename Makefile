@@ -9,7 +9,7 @@ auto_link+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
 OBJECTS:=get jsmnutils rand reg path raw random_popper
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
-SRC_HDR:=config $(OBJECTS)
+SRC_HDR:=config collect log $(OBJECTS)
 TEST_HDR:=test
 
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE
@@ -29,6 +29,7 @@ TEST_HDR:=$(addprefix $(TEST)/,$(addsuffix .h,$(TEST_HDR)))
 
 ifeq ($(DEBUG),1)
 	CFLAGS+=-Og -g3
+	CFLAGS+=-D_COLLECT_DEBUG
 	BUILD_COLLECT_CFLAGS:=$(auto_link)
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
 	TEST_CMD:=-
