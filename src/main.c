@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
     char *reddit_url;
 
     if (argc < 2) {
-        reddit_url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
+        reddit_url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=5";
     } else {
         reddit_url = argv[1];
     }
