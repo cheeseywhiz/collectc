@@ -15,7 +15,12 @@ enum log_levels {
     LOG_ALL = 0,
 };
 
+void log_init_prog_name(char *argv[]);
+
+#define LOG_NAME_MAX 255
+#define LOG_NAME_SIZE 255 + 3
 extern int log_level;
+extern char prog_name[LOG_NAME_SIZE];
 
 #ifdef _COLLECT_DEBUG
 # define LOG_LEVEL_RESET() log_level = LOG_DEBUG
@@ -35,25 +40,26 @@ extern int log_level;
     __SET_LOWER(level, LOG_INFO); \
     __SET_LOWER(level, LOG_DEBUG)
 
+#define STDERR(args...) fprintf(stderr, args)
 #define PRINT_LEVEL(level) \
-    fprintf(stderr, "collectc: "); \
+    STDERR("%s", prog_name); \
     if (0) { \
     } else if (level & LOG_CRITICAL) { \
-        fprintf(stderr, "critical: "); \
+        STDERR("critical: "); \
     } else if (level & LOG_ERROR) { \
-        fprintf(stderr, "error: "); \
+        STDERR("error: "); \
     } else if (level & LOG_WARNING) { \
-        fprintf(stderr, "warning: "); \
+        STDERR("warning: "); \
     } else if (level & LOG_INFO) { \
-        fprintf(stderr, "info: "); \
+        STDERR("info: "); \
     } else if (level & LOG_DEBUG) { \
-        fprintf(stderr, "debug: "); \
+        STDERR("debug: "); \
     }
 
 #define PRINT(level, args...) \
     PRINT_LEVEL(level); \
-    fprintf(stderr, args); \
-    fprintf(stderr, "\n")
+    STDERR(args); \
+    STDERR("\n")
 
 #define LOG_LEVEL(level, args...) if (log_level & level) { PRINT(level, args); }
 #define CRITICAL(args...) LOG_LEVEL(LOG_CRITICAL, args)

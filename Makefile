@@ -8,7 +8,7 @@ TEST_PROGRAM:=$(BUILD)/test
 
 autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
-ifeq ($(AUTOLINK),1)
+ifeq ($(DO_AUTOLINK),1)
 	AUTOLINK:=$(autolink)
 else
 	AUTOLINK:=
@@ -18,6 +18,8 @@ OBJECTS:=get jsmnutils rand reg path raw random_popper log
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
 SRC_HDR:=config collect $(OBJECTS)
 TEST_HDR:=test
+
+COLLECT_FLAGS:=-nrav -ocache
 
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE
 CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
@@ -125,9 +127,10 @@ version: $(version_programs)
 
 .PHONY: travisrun
 travisrun: version deps all test
-	$(BUILD)/collect
-	$(BUILD)/collect
-	$(BUILD)/collect random
+	$(BUILD)/collect -h
+	$(BUILD)/collect reddit $(COLLECT_FLAGS)
+	$(BUILD)/collect reddit $(COLLECT_FLAGS)
+	$(BUILD)/collect random $(COLLECT_FLAGS)
 
 .PHONY: travis
 travis: clean

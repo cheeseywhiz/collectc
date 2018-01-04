@@ -388,9 +388,5 @@ char* raw_listing_next_fallback(raw_listing *self, int flags) {
         path = strdup(post->path);
     }
 
-    if (path) {
-        INFO("file: %s", path);
-    }
-
     return path;
 }
