@@ -5,7 +5,7 @@
 
 #include "collect.h"
 
-char *usage = "collect {reddit,random} [-ahnrv] [-o=DIR] [-u=URL]\n\
+char *usage = "collect {reddit,random} [-ahnrvV] [-o=DIR] [-u=URL]\n\
 \n\
 Collect an image from a Reddit URL.\n\
 \n\
@@ -19,6 +19,7 @@ flags:\n\
 \t-n\tfallback new\n\
 \t-r\tno repeat\n\
 \t-v\tverbosity\n\
+\t-V\tversion\n\
 \n\
 parameters:\n\
 \t-o=~/.cache/collectc\n\
@@ -71,12 +72,16 @@ int main(int argc, char *argv[]) {
 
     subcommand_func subcommand = get_subcommand_func(argv[1]);
 
-    if (getopt(argc, argv, "h") == 'h') {
-        printf("%s\n", usage);
-        return 0;
+    switch(getopt(argc, argv, "hV")) {
+        case 'h':
+            printf("%s\n", usage);
+            return 0;
+        case 'V':
+            printf("%s\n", VERSION);
+            return 0;
     }
 
-    while ((flag = getopt(argc, argv, "ahnrvo:u:")) != -1) {
+    while ((flag = getopt(argc, argv, "ahnrvVo:u:")) != -1) {
         switch (flag) {
             case 'a':
                 raw_flags |= RAW_ALL;
@@ -93,6 +98,9 @@ int main(int argc, char *argv[]) {
             case 'v':
                 verbosity++;
                 break;
+            case 'V':
+                printf("%s\n", VERSION);
+                return 0;
             case 'o':
                 dir = optarg;
                 break;

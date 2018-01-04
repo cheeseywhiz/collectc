@@ -114,6 +114,14 @@ testdeps:
 testcollect:
 	$(TEST_CMD)
 
+.PHONY: runcollect
+runcollect:
+	$(BUILD)/collect -V
+	$(BUILD)/collect -h
+	$(BUILD)/collect reddit $(COLLECT_FLAGS)
+	$(BUILD)/collect reddit $(COLLECT_FLAGS)
+	$(BUILD)/collect random $(COLLECT_FLAGS)
+
 .PHONY: test
 test: builddirs $(BUILD)/test testcollect
 
@@ -126,11 +134,7 @@ $(version_programs):
 version: $(version_programs)
 
 .PHONY: travisrun
-travisrun: version deps all test
-	$(BUILD)/collect -h
-	$(BUILD)/collect reddit $(COLLECT_FLAGS)
-	$(BUILD)/collect reddit $(COLLECT_FLAGS)
-	$(BUILD)/collect random $(COLLECT_FLAGS)
+travisrun: version deps all test runcollect
 
 .PHONY: travis
 travis: clean
