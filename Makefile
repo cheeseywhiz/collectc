@@ -7,9 +7,9 @@ DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
 auto_link+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
-OBJECTS:=get jsmnutils rand reg path raw random_popper
+OBJECTS:=get jsmnutils rand reg path raw random_popper log
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
-SRC_HDR:=config collect log $(OBJECTS)
+SRC_HDR:=config collect $(OBJECTS)
 TEST_HDR:=test
 
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE

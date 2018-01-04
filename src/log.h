@@ -15,7 +15,7 @@ enum log_levels {
     LOG_ALL = 0,
 };
 
-int log_level;
+extern int log_level;
 
 #ifdef _COLLECT_DEBUG
 # define LOG_LEVEL_RESET() log_level = LOG_DEBUG
@@ -63,6 +63,6 @@ int log_level;
 #define DEBUG(args...) LOG_LEVEL(LOG_DEBUG, args)
 #define LOG(args...) INFO(args)
 
-#define LOG_ERRNO() ERROR(strerror(errno))
+#define LOG_ERRNO() ERROR("%s", strerror(errno))
 
 #endif
