@@ -22,8 +22,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    char *path;
+
     if (!strcmp(reddit_url, "random")) {
-        char *path = path_random_file(dir);
+        path = path_random_file(dir);
         free(dir);
 
         if (!path) {
@@ -43,18 +45,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int flags = RAW_NO_REPEAT | RAW_RANDOM | RAW_DOWNLOAD;
-    struct raw_post *post = raw_listing_next(posts, flags);
+    int flags = RAW_NO_REPEAT | RAW_RANDOM | RAW_DOWNLOAD | RAW_NEW | RAW_ALL;
+    path = raw_listing_next_fallback(posts, flags);
 
-    if (!post) {
+    if (!path) {
         raw_free_listing(posts);
         free(dir);
         return 1;
     }
 
-    LOG("file: %s", post->path);
-    printf("%s\n", post->path);
-    raw_free_post(post);
+    printf("%s\n", path);
+    free(path);
     raw_free_listing(posts);
     free(dir);
     return 0;

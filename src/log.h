@@ -2,6 +2,8 @@
 #define LOG_H
 
 #include <stdio.h>
+#include <errno.h>
+char* strerror(int errnum);
 
 enum log_levels {
     LOG_NONE = 1 << 5,
@@ -34,6 +36,7 @@ int log_level;
     __SET_LOWER(level, LOG_DEBUG)
 
 #define PRINT_LEVEL(level) \
+    fprintf(stderr, "collectc: "); \
     if (0) { \
     } else if (level & LOG_CRITICAL) { \
         fprintf(stderr, "critical: "); \
@@ -59,5 +62,7 @@ int log_level;
 #define INFO(args...) LOG_LEVEL(LOG_INFO, args)
 #define DEBUG(args...) LOG_LEVEL(LOG_DEBUG, args)
 #define LOG(args...) INFO(args)
+
+#define LOG_ERRNO() ERROR(strerror(errno))
 
 #endif

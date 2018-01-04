@@ -322,6 +322,7 @@ struct stat* path_stat(char *path) {
     struct stat *st = malloc(sizeof(struct stat));
 
     if (!st) {
+        LOG_ERRNO();
         return NULL;
     } else if (stat(path, st)) {
         free(st);
@@ -414,6 +415,7 @@ rp_t* path_list_dir(char *path) {
     free(path);
 
     if (closedir(dir)) {
+        LOG_ERRNO();
         rp_deep_free(&dir_list, free);
         return NULL;
     };
@@ -451,6 +453,11 @@ int path_open_write(char *path) {
     int flags = O_CREAT | O_WRONLY | O_TRUNC;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     int fd = open(path, flags, mode);
+
+    if (fd < 0) {
+        LOG_ERRNO();
+    }
+
     return fd;
 }
 
@@ -458,8 +465,10 @@ int path_touch(char *path) {
     int fd = path_open_write(path);
 
     if (fd < 0) {
+        LOG_ERRNO();
         return 1;
     } else if (close(fd)) {
+        LOG_ERRNO();
         return 1;
     } else {
         return 0;
@@ -504,8 +513,7 @@ int path_mkdir(char *path, int mode, int mk_flags) {
 
 char* path_mktempd(void) {
     char template[PATH_MAX] = "/tmp/collectc.XXXXXX";
-    char *tmp = strdup(mkdtemp(template));
-    return tmp;
+    return strdup(mkdtemp(template));
 }
 
 char* path_url_fname(char *path, char *url) {

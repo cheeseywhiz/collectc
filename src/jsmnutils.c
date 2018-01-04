@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log.h"
 #include "jsmn.h"
 #include "jsmnutils.h"
 #include "reg.h"
@@ -10,6 +11,7 @@ ju_json_t* ju_parse(char *json_str) {
     ju_json_t *self = malloc(sizeof(ju_json_t));
 
     if (!self) {
+        LOG_ERRNO();
         return NULL;
     }
 
@@ -30,6 +32,7 @@ ju_json_t* ju_parse(char *json_str) {
     if (tokens) {
         self->tokens = tokens;
     } else {
+        LOG_ERRNO();
         free(self);
         return NULL;
     }
@@ -88,6 +91,7 @@ struct ju_array_iter* ju_array_init(ju_json_t *self, int array_i) {
     struct ju_array_iter *iter = malloc(sizeof(struct ju_array_iter));
     
     if (!iter) {
+        LOG_ERRNO();
         return NULL;
     }
 

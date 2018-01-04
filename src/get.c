@@ -23,129 +23,99 @@ void free_response(struct response *self) {
     free(self);
 }
 
-typedef struct {
+struct var_len_buffer {
     char *content;
     size_t length;
-} buffer_t;
+};
 
-static buffer_t* new_buffer(void) {
-    buffer_t *self = malloc(sizeof(buffer_t));
+#define __VAR_LEN_BUFFER(content_, length_) \
+    (struct var_len_buffer) { \
+        .content = content_, \
+        .length = length_, \
+    }
 
-    if (!self) {
-        return NULL;
-    };
+#define __NEW_BUFFER() __VAR_LEN_BUFFER(NULL, 0)
 
-    self->content = NULL;
-    self->length = 0;
-    return self;
-}
-
-static size_t append_buffer(char *buffer, size_t size, size_t n_items, buffer_t *self) {
+static size_t append_buffer(char *buffer, size_t size, size_t n_items, struct var_len_buffer *self) {
     size_t buffer_len = size * n_items;
     char *ptr = realloc(self->content, self->length + buffer_len + 1);
 
     if (ptr) {
         self->content = ptr;
     } else {
+        LOG_ERRNO();
         return 0;
     };
 
     memcpy(self->content + self->length, buffer, buffer_len);
     self->length += buffer_len;
     self->content[self->length] = '\0';
-
     return buffer_len;
 }
 
 struct response* get_response(char *url) {
-    int exit = 0;
-    CURLcode res = 0;
-    CURL *curl;
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
+    CURL *curl = curl_easy_init();
 
     if (!curl) {
-        exit = 1;
-        goto cleanup1;
-    } else {
-        char user_agent[strlen(UA_PREFIX) + 1 + strlen(VERSION) + 1];
-        sprintf(user_agent, "%s/%s", UA_PREFIX, VERSION);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
-    };
-
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-
-    buffer_t *hd_buf = new_buffer();
-
-    if (!hd_buf) {
-        exit = 1;
-        goto cleanup1;
-    };
-
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, append_buffer);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, hd_buf);
-    
-    buffer_t *ct_buf = new_buffer();
-
-    if (!ct_buf) {
-        exit = 1;
-        free(hd_buf);
-        goto cleanup1;
-    };
-
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, append_buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, ct_buf);
-
-    res = curl_easy_perform(curl);
-
-    if (res != CURLE_OK) {
-        fprintf(stderr, "curl_easy_perform failed (%s)\n", curl_easy_strerror(res));
-        exit = 1;
-        goto cleanup2;
-    };
-
-    struct response *self = malloc(sizeof(struct response));
-
-    if (!self) {
-        exit = 1;
-        goto cleanup2;
-    };
-
-    char *pattern = "content-type:[ ]*([^\r\n]*)";
-    char *match = regex_match_one_subexpr(pattern, hd_buf->content, REG_ICASE);
-
-    if (!match) {
-        match = calloc(1, 1);
-
-        if (!match) {
-            exit = 1;
-            free(self);
-            goto cleanup2;
-        };
-    };
-
-    self->type = match;
-    self->content = ct_buf->content;
-    self->length = ct_buf->length;
-    self->url = url;
-
-    if (hd_buf->content) {
-        free(hd_buf->content);
+        curl_global_cleanup();
+        return NULL;
     }
 
-cleanup2:
-    free(hd_buf);
-    free(ct_buf);
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    char user_agent[strlen(UA_PREFIX) + 1 + strlen(VERSION) + 1];
+    sprintf(user_agent, "%s/%s", UA_PREFIX, VERSION);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
 
-cleanup1:
+    struct var_len_buffer hd_buf = __NEW_BUFFER();
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, append_buffer);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hd_buf);
+    
+    struct var_len_buffer ct_buf = __NEW_BUFFER();
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, append_buffer);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ct_buf);
+
+    struct response *self = NULL;
+    CURLcode res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+        ERROR("curl_easy_perform failed (%s)", curl_easy_strerror(res));
+        goto cleanup;
+    }
+
+    self = malloc(sizeof(struct response));
+
+    if (!self) {
+        LOG_ERRNO();
+        goto cleanup;
+    }
+
+    char *pattern = "content-type:[ ]*([^\r\n]*)";
+    self->type = regex_match_one_subexpr(pattern, hd_buf.content, REG_ICASE);
+
+    if (!self->type) {
+        self->type = calloc(1, 1);
+
+        if (!self->type) {
+            LOG_ERRNO();
+            free(self);
+            self = NULL;
+            goto cleanup;
+        }
+    }
+
+    self->content = ct_buf.content;
+    self->length = ct_buf.length;
+    self->url = url;
+
+    if (hd_buf.content) {
+        free(hd_buf.content);
+    }
+
+cleanup:
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-
-    if (!exit) {
-        return self;
-    } else {
-        return NULL;
-    };
+    return self;
 }
 
 int get_download_response(struct response *self, char *path) {

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "log.h"
 #include "random_popper.h"
 #include "rand.h"
 
@@ -7,22 +8,13 @@ rp_t* rp_new(void *data) {
     rp_t *self = malloc(sizeof(rp_t));
 
     if (!self) {
+        LOG_ERRNO();
         return NULL;
     }
 
     self->data = data;
     self->next = NULL;
     return self;
-}
-
-void rp_shallow_free(rp_t **self) {
-    rp_t *item, *item_alias;
-
-    for (item = *self; item;) {
-        item_alias = item;
-        item = item->next;
-        free(item_alias);
-    }
 }
 
 void rp_deep_free(rp_t **self, rp_free_func free_data) {
@@ -34,6 +26,12 @@ void rp_deep_free(rp_t **self, rp_free_func free_data) {
         free_data(item_alias->data);
         free(item_alias);
     }
+}
+
+static void no_op_free(__attribute__((unused)) void *ptr) {};
+
+void rp_shallow_free(rp_t **self) {
+    rp_deep_free(self, no_op_free);
 }
 
 rp_t* rp_second_to_last(rp_t **self) {
@@ -148,6 +146,7 @@ int* new_int(int value) {
     int *new = malloc(sizeof(int));
 
     if (!new) {
+        LOG_ERRNO();
         return NULL;
     }
 

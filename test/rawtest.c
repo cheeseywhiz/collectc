@@ -21,12 +21,10 @@ SMALL_TEST test_listing_next(raw_listing *listing) {
     SUBSCORE(test_new_post(next));
     char *next_path = "cache/test/archlinux-logo-dark-90dpi.ebdee92a15b3.png";
     path_touch(next_path);
-    raw_free_post(next);
     next = raw_listing_next(listing, RAW_NO_REPEAT);
     char *next_title = raw_post_data_get(next, "title");
     ASSERT(!strcmp(next_title, "reddit"));
     free(next_title);
-    raw_free_post(next);
     RETURN_SCORE();
 }
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log.h"
 #include "reg.h"
 
 #ifndef _GNU_SOURCE
@@ -49,6 +50,7 @@ static char* str_rev(char *s) {
     char *new = calloc(s_len + 1, 1);
 
     if (!new) {
+        LOG_ERRNO();
         return NULL;
     }
 
@@ -125,6 +127,7 @@ static char* remove_i(char *haystack, char *needle, size_t i) {
     char *ptr = realloc(before, before_len + after_len + 1);
 
     if (!ptr) {
+        LOG_ERRNO();
         free(after);
         free(before);
         return NULL;
@@ -165,6 +168,7 @@ char* regex_str_slice(char *src, int start, int end) {
         char *dest = calloc(dest_length + 1, 1);
 
         if (!dest) {
+            LOG_ERRNO();
             return NULL;
         }
 

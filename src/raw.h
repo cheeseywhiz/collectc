@@ -9,6 +9,8 @@ enum raw_flags {
     RAW_NO_REPEAT = 1 << 0,
     RAW_RANDOM = 1 << 1,
     RAW_DOWNLOAD = 1 << 2,
+    RAW_NEW = 1 << 3,
+    RAW_ALL = 1 << 4,
 };
 
 struct raw_post {
@@ -34,12 +36,14 @@ typedef struct {
     struct response *re;
     struct raw_base_listing *iter;
     int free_json;
-    rp_t *existing_paths;
+    rp_t *existing_posts;
+    rp_t *new_posts;
 } raw_listing;
 
 raw_listing* raw_listing_data(char *path, ju_json_t *json);
 raw_listing* raw_listing_url(char *path, char *url);
 void raw_free_listing(raw_listing *self);
 struct raw_post* raw_listing_next(raw_listing *self, int flags);
+char* raw_listing_next_fallback(raw_listing *self, int flags);
 
 #endif
