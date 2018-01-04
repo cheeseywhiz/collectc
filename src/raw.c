@@ -73,9 +73,7 @@ int raw_post_download(struct raw_post *self) {
 
 static void log_attribute(struct raw_post *self, char *key) {
     char *value = raw_post_data_get(self, key);
-
     if (!value) return;
-
     LOG("%s: %s", key, value);
     free(value);
 }
@@ -386,10 +384,6 @@ char* raw_listing_next_fallback(raw_listing *self, int flags) {
         }
 
         path = strdup(post->path);
-    }
-
-    if (path) {
-        INFO("file: %s", path);
     }
 
     return path;
