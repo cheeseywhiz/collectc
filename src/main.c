@@ -5,7 +5,7 @@
 
 #include "collect.h"
 
-char *usage = "collect [reddit,random] [-ahnrv] [-o=DIR] [-u=URL]\n\
+char *usage = "collect {reddit,random} [-ahnrv] [-o=DIR] [-u=URL]\n\
 \n\
 Collect an image from a Reddit URL.\n\
 \n\
@@ -26,34 +26,22 @@ parameters:\n\
 \t-u=https://www.reddit.com/r/EarthPorn/hot/.json?limit=10\n\
 \t\treddit post listing URL";
 
-struct args {
-    char *dir, *url;
-    int raw_flags;
-};
+typedef char* (*subcommand_func)(char *dir, char *url, int raw_flags);
 
-#define __ARGS(dir_, url_, raw_flags_) \
-    (struct args) { \
-        .dir = dir_, \
-        .url = url_, \
-        .raw_flags = raw_flags_, \
-    }
-
-typedef char* (*subcommand_func)(struct args);
-
-static char* reddit_subcommand(struct args args) {
-    raw_listing *listing = raw_listing_url(args.dir, args.url);
+static char* reddit_subcommand(char *dir, char *url, int raw_flags) {
+    raw_listing *listing = raw_listing_url(dir, url);
 
     if (!listing) {
         return NULL;
     }
 
-    char *path = raw_listing_next_fallback(listing, args.raw_flags);
+    char *path = raw_listing_next_fallback(listing, raw_flags);
     raw_free_listing(listing);
     return path;
 }
 
-static char* random_subcommand(struct args args) {
-    return path_random_file(args.dir);
+static char* random_subcommand(char *dir, __attribute__((unused)) char *url, __attribute__((unused)) int raw_flags) {
+    return path_random_file(dir);
 }
 
 static subcommand_func get_subcommand_func(char *subcommand) {
@@ -69,9 +57,9 @@ static subcommand_func get_subcommand_func(char *subcommand) {
 int main(int argc, char *argv[]) {
     log_init_prog_name(argv);
     rand_reseed();
-    char *dir_default = "~/.cache/collectc";
-    char *url_default = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
-    struct args args = __ARGS(dir_default, url_default, RAW_RANDOM | RAW_DOWNLOAD);
+    char *dir = "~/.cache/collectc";
+    char *url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
+    int raw_flags = RAW_RANDOM | RAW_DOWNLOAD;
     int verbosity = 0;
     int flag;
     opterr = 0;
@@ -91,25 +79,25 @@ int main(int argc, char *argv[]) {
     while ((flag = getopt(argc, argv, "ahnrvo:u:")) != -1) {
         switch (flag) {
             case 'a':
-                args.raw_flags |= RAW_ALL;
+                raw_flags |= RAW_ALL;
                 break;
             case 'h':
                 printf("%s\n", usage);
                 return 0;
             case 'n':
-                args.raw_flags |= RAW_NEW;
+                raw_flags |= RAW_NEW;
                 break;
             case 'r':
-                args.raw_flags |= RAW_NO_REPEAT;
+                raw_flags |= RAW_NO_REPEAT;
                 break;
             case 'v':
                 verbosity++;
                 break;
             case 'o':
-                args.dir = optarg;
+                dir = optarg;
                 break;
             case 'u':
-                args.url = optarg;
+                url = optarg;
                 break;
             case '?':
                 ERROR("Unknown option: -%c", optopt);
@@ -131,11 +119,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (path_mkdir(args.dir, MK_MODE_755, MK_EXISTS_OK)) {
+    if (path_mkdir(dir, MK_MODE_755, MK_EXISTS_OK)) {
         return 1;
     }
 
-    char *path = subcommand(args);
+    char *path = subcommand(dir, url, raw_flags);
 
     if (!path) {
         return 1;
