@@ -2,7 +2,6 @@
 #define COLLECT_H
 
 #include "log.h"
-#include "config.h"
 #include "jsmnutils.h"
 #include "raw.h"
 #include "path.h"

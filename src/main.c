@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
             printf("%s\n", usage);
             return 0;
         case 'V':
-            printf("%s\n", VERSION);
+            printf("%s\n", COLLECT_VERSION);
             return 0;
     }
 
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
                 verbosity++;
                 break;
             case 'V':
-                printf("%s\n", VERSION);
+                printf("%s\n", COLLECT_VERSION);
                 return 0;
             case 'o':
                 dir = optarg;

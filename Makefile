@@ -6,6 +6,8 @@ OBJ:=$(BUILD)/obj
 DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
 
+VERSION:=0.3.2
+
 autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
 ifeq ($(DO_AUTOLINK),1)
@@ -16,12 +18,12 @@ endif
 
 OBJECTS:=get jsmnutils rand reg path raw random_popper log
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
-SRC_HDR:=config collect $(OBJECTS)
+SRC_HDR:=collect $(OBJECTS)
 TEST_HDR:=test
 
 COLLECT_FLAGS:=-nrav -ocache
 
-CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE -DCOLLECT_VERSION=\"$(VERSION)\"
 CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 
 TEST_CFLAGS:=-I$(SRC)
