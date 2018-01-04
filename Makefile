@@ -5,7 +5,14 @@ BUILD:=build
 OBJ:=$(BUILD)/obj
 DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
-auto_link+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
+
+autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
+
+ifeq ($(AUTOLINK),1)
+	AUTOLINK:=$(autolink)
+else
+	AUTOLINK:=
+endif
 
 OBJECTS:=get jsmnutils rand reg path raw random_popper log
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
@@ -14,11 +21,9 @@ TEST_HDR:=test
 
 CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE
 CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
-BUILD_COLLECT_CFLAGS:=
 
 TEST_CFLAGS:=-I$(SRC)
 TEST_CFLAGS+=-Og -g3 -Wno-unused-variable
-BUILD_TEST_CFLAGS:=$(auto_link)
 
 version_programs:=$(CC) $(LD) $(MAKE) curl-config
 
@@ -30,7 +35,6 @@ TEST_HDR:=$(addprefix $(TEST)/,$(addsuffix .h,$(TEST_HDR)))
 ifeq ($(DEBUG),1)
 	CFLAGS+=-Og -g3
 	CFLAGS+=-D_COLLECT_DEBUG
-	BUILD_COLLECT_CFLAGS:=$(auto_link)
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
 	TEST_CMD:=-
 else
@@ -87,7 +91,7 @@ $(BUILD)/libcollect.so: $(OBJECTS)
 	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
-	$(CC) $(CFLAGS) $(BUILD_COLLECT_CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect
+	$(CC) $(CFLAGS) $(AUTOLINK) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect
 
 # TEST_OBJS
 $(OBJ)/%.o: $(TEST)/%.c $(SRC_HDR) $(TEST_HDR)
@@ -98,7 +102,7 @@ $(BUILD)/libtest.so: $(TEST_OBJS)
 	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(BUILD)/test: $(TEST)/main.c $(BUILD)/libcollect.so $(BUILD)/libtest.so
-	$(CC) $(CFLAGS) $(TEST_CFLAGS) $(BUILD_TEST_CFLAGS) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -ltest -lcollect
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) $(autolink) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -ltest -lcollect
 
 .PHONY: testdeps
 testdeps:
