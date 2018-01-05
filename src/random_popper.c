@@ -14,6 +14,7 @@ rp_t* rp_new(void *data) {
 
     self->data = data;
     self->next = NULL;
+    self->prev = NULL;
     return self;
 }
 
@@ -34,32 +35,14 @@ void rp_shallow_free(rp_t **self) {
     rp_deep_free(self, no_op_free);
 }
 
-rp_t* rp_second_to_last(rp_t **self) {
-    if (!*self) {
-        return NULL;
-    }
-
-    rp_t *second_to_last = NULL;
-
-    for (rp_t *last = *self; last->next; last = last->next) {
-        second_to_last = last;
-    }
-
-    return second_to_last;
-}
-
 rp_t* rp_last(rp_t **self) {
     if (!*self) {
         return NULL;
     }
 
-    rp_t *second_to_last = rp_second_to_last(self);
-
-    if (second_to_last) {
-        return second_to_last->next;
-    } else {
-        return *self;
-    }
+    rp_t *last;
+    for (last = *self; last->next; last = last->next);
+    return last;
 }
 
 rp_t* rp_append(rp_t **self, void *data) {
@@ -67,10 +50,10 @@ rp_t* rp_append(rp_t **self, void *data) {
 
     if (!new) {
         return NULL;
-    }
-
-    if (*self) {
-        rp_last(self)->next = new;
+    } else if (*self) {
+        rp_t *last = rp_last(self);
+        last->next = new;
+        new->prev = last;
     } else {
         *self = new;
     }
@@ -112,18 +95,21 @@ void* rp_pop_index(rp_t **self, size_t index) {
     rp_t *item;
     size_t self_len = rp_len(self);
 
-    if (index >= self_len || !self_len) {
+    if (!self_len || index >= self_len) {
         item = NULL;
-    } else if (self_len == 1) {
-        item = *self;
-        *self = NULL;
-    } else if (!index) {
+    } else if (!index || self_len == 1) {
         item = *self;
         *self = item->next;
     } else {
-        rp_t *before = rp_get_index(self, index - 1);
-        item = before->next;
-        before->next = item->next;
+        item = rp_get_index(self, index);
+        if (!item) return NULL;
+
+        rp_t *before, *after;
+        before = item->prev;
+        after = item->next;
+
+        if (before) before->next = after;
+        if (after) after->prev = before;
     }
 
     void *data;
