@@ -220,6 +220,7 @@ static struct raw_post* listing_next_post(raw_listing *self, int random) {
     if (!post) {
         return NULL;
     } else if (path_eq(self->path, post->path)) {
+        raw_free_post(post);
         return listing_next_post(self, random);
     } else if (!rp_append(&self->new_posts, post)) {
         raw_free_post(post);

@@ -6,7 +6,6 @@
 #include <unistd.h>
 
 #include "log.h"
-#include "config.h"
 #include "get.h"
 #include "reg.h"
 #include "path.h"
@@ -63,8 +62,8 @@ struct response* get_response(char *url) {
     }
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    char user_agent[strlen(UA_PREFIX) + 1 + strlen(VERSION) + 1];
-    sprintf(user_agent, "%s/%s", UA_PREFIX, VERSION);
+    char user_agent[strlen(UA_PREFIX) + 1 + strlen(COLLECT_VERSION) + 1];
+    sprintf(user_agent, "%s/%s", UA_PREFIX, COLLECT_VERSION);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
 
     struct var_len_buffer hd_buf = __NEW_BUFFER();

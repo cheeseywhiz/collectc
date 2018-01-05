@@ -367,6 +367,18 @@ int path_is_file(char *path) {
     return is_file;
 }
 
+int path_is_link(char *path) {
+    struct stat *st = path_stat(path);
+
+    if (!st) {
+        return 0;
+    }
+
+    int is_link = S_ISLNK(st->st_mode);
+    free(st);
+    return is_link;
+}
+
 static rp_t* append_entry_path(rp_t **self, char *path, struct dirent *entry) {
     char *entry_path = path_join(path, entry->d_name);
 
@@ -421,6 +433,75 @@ rp_t* path_list_dir(char *path) {
     };
 
     return dir_list;
+}
+
+static rp_t* tree_append(rp_t **tree, char *path) {
+    if (!rp_append(tree, path)) {
+        return NULL;
+    }
+
+    rp_t *dir_list = path_list_dir(path);
+
+    if (!dir_list) {
+        return *tree;
+    }
+
+    rp_t *item;
+    char *item_path;
+
+    for (item = dir_list; item; item = item->next) {
+        item_path = item->data;
+
+        if (!path_is_link(item_path) && path_is_dir(item_path)) {
+            if (!tree_append(tree, item_path)) {
+                continue;
+            }
+        } else {
+            if (!rp_append(tree, item_path)) {
+                break;
+            }
+        }
+    }
+
+    rp_shallow_free(&dir_list);
+    return *tree;
+}
+
+rp_t* path_tree(char *path) {
+    char *path_copy = strdup(path);
+
+    if (!path_copy) {
+        return NULL;
+    }
+
+    rp_t *tree = NULL;
+    return tree_append(&tree, path_copy);
+}
+
+int path_rm_tree(char *path) {
+    rp_t *tree = path_tree(path);
+
+    if (!tree) {
+        return 1;
+    }
+
+    rp_t *item;
+    char *item_path;
+    int exit_val = 0;
+
+    for (item = rp_last(&tree); item; item = item->prev) {
+        item_path = item->data;
+
+        if (remove(item_path)) {
+            LOG_ERRNO();
+            exit_val = -1;
+            goto exit;
+        }
+    }
+
+exit:
+    rp_deep_free(&tree, free);
+    return exit_val;
 }
 
 char* path_random_file(char *path) {

@@ -6,9 +6,12 @@ OBJ:=$(BUILD)/obj
 DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
 
+VERSION:=0.3.2
+
 autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
 ifeq ($(DO_AUTOLINK),1)
+	ECHO:=$(shell echo DO_AUTOLINK=1 set >&2)
 	AUTOLINK:=$(autolink)
 else
 	AUTOLINK:=
@@ -16,18 +19,18 @@ endif
 
 OBJECTS:=get jsmnutils rand reg path raw random_popper log
 TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
-SRC_HDR:=config collect $(OBJECTS)
+SRC_HDR:=collect $(OBJECTS)
 TEST_HDR:=test
 
 COLLECT_FLAGS:=-nrav -ocache
 
-CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE
+CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE -DCOLLECT_VERSION=\"$(VERSION)\"
 CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 
 TEST_CFLAGS:=-I$(SRC)
 TEST_CFLAGS+=-Og -g3 -Wno-unused-variable
 
-version_programs:=$(CC) $(LD) $(MAKE) curl-config
+version_cmds:=curl-config $(CC) $(LD) $(MAKE)
 
 OBJECTS:=$(addprefix $(OBJ)/,$(addsuffix .o,$(OBJECTS)))
 TEST_OBJS:=$(addprefix $(OBJ)/,$(addsuffix .o,$(TEST_OBJS)))
@@ -35,22 +38,23 @@ SRC_HDR:=$(addprefix $(SRC)/,$(addsuffix .h,$(SRC_HDR)))
 TEST_HDR:=$(addprefix $(TEST)/,$(addsuffix .h,$(TEST_HDR)))
 
 ifeq ($(DEBUG),1)
+	ECHO:=$(shell echo DEBUG=1 set >&2)
 	CFLAGS+=-Og -g3
 	CFLAGS+=-D_COLLECT_DEBUG
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
-	TEST_CMD:=-
+	VALGRIND:=-
 else
 	CFLAGS+=-O2
-	TEST_CMD:=
+	VALGRIND:=
 endif
 
-VALGRIND:=$(shell command -v valgrind 2>/dev/null)
+HAS_VALGRIND:=$(shell command -v valgrind 2>/dev/null)
 
-ifdef VALGRIND
-	TEST_CMD+=valgrind $(VFLAGS)
+ifdef HAS_VALGRIND
+	VALGRIND+=valgrind $(VFLAGS)
+else
+	ECHO:=$(shell echo valgrind not found >&2)
 endif
-
-TEST_CMD+=$(TEST_PROGRAM)
 
 .PHONY: all
 all: builddirs $(BUILD)/collect
@@ -111,31 +115,40 @@ testdeps:
 	cd $(LIB)/jsmn && $(MAKE) test
 
 .PHONY: testcollect
-testcollect:
-	$(TEST_CMD)
+testcollect: V_CMD:=$(BUILD)/test
+testcollect: $(BUILD)/test valgrind
 
 .PHONY: runcollect
-runcollect:
-	$(BUILD)/collect -V
-	$(BUILD)/collect -h
-	$(BUILD)/collect reddit $(COLLECT_FLAGS)
-	$(BUILD)/collect reddit $(COLLECT_FLAGS)
-	$(BUILD)/collect random $(COLLECT_FLAGS)
+runcollect: $(BUILD)/collect
+	$< -V
+	$< -h
+	$< reddit $(COLLECT_FLAGS)
+	$< reddit $(COLLECT_FLAGS)
+	$< random $(COLLECT_FLAGS)
+	$< clear $(COLLECT_FLAGS)
+
+.PHONY: log
+log:
+	./.teeexit.sh make.log $(LOG)
+
+.PHONY: valgrind
+valgrind:
+	$(VALGRIND) $(V_CMD)
 
 .PHONY: test
-test: builddirs $(BUILD)/test testcollect
+test: builddirs testcollect
 
-.PHONY: $(version_programs)
-$(version_programs):
+.PHONY: $(version_cmds)
+$(version_cmds):
 	-$@ --version
 	@echo
 
 .PHONY: version
-version: $(version_programs)
+version: $(version_cmds)
 
 .PHONY: travisrun
 travisrun: version deps all test runcollect
 
 .PHONY: travis
-travis: clean
-	./.teeexit.sh travis.log $(MAKE) travisrun
+travis: LOG:=$(MAKE) travisrun
+travis: clean log

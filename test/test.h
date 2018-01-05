@@ -29,7 +29,7 @@ struct score {
 #define ADD_FAIL(n) FAILING += n
 #define ADD_SCORE(pass, fail) \
     ADD_PASS(pass); \
-    ADD_PASS(fail)
+    ADD_FAIL(fail)
 #define SUBSCORE(score) \
     subscore = score; \
     ADD_SCORE(subscore.passing, subscore.failing)

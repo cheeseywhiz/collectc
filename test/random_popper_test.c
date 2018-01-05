@@ -41,6 +41,15 @@ SMALL_TEST test_last(rp_t **popper) {
     RETURN_SCORE();
 }
 
+SMALL_TEST test_prev(rp_t **popper) {
+    SCORE_INIT();
+    rp_t *last = rp_last(popper);
+    rp_t *prev = last->prev;
+    int *value = prev->data;
+    ASSERT(*value == 8);
+    RETURN_SCORE();
+}
+
 SMALL_TEST test_pop_index(rp_t **popper) {
     SCORE_INIT();
     int index = 4;
@@ -71,15 +80,7 @@ SMALL_TEST test_pop_random(rp_t **popper) {
 
 SMALL_TEST null_check(rp_t **popper) {
     SCORE_INIT();
-    int i = 0;
-    rp_t *element;
-    for (element = *popper; element; element = element->next) i++;
-    ASSERT(i == 0);
-
-    if (*popper) {
-        rp_shallow_free(popper);
-    }
-
+    ASSERT(!*popper);
     RETURN_SCORE();
 }
 
@@ -90,6 +91,7 @@ BIG_TEST rp_test_main(void) {
     SMALL_REPORT("rp_len()", test_len(&popper));
     SMALL_REPORT("rp_get_index()", test_get_index(&popper));
     SMALL_REPORT("rp_last()", test_last(&popper));
+    SMALL_REPORT("rp_t->prev", test_prev(&popper));
     SMALL_REPORT("rp_pop_index()", test_pop_index(&popper));
     SMALL_REPORT("rp_pop_random()", test_pop_random(&popper));
     SMALL_REPORT("popper NULL check", null_check(&popper));
