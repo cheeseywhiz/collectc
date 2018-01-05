@@ -478,6 +478,31 @@ rp_t* path_tree(char *path) {
     return tree_append(&tree, path_copy);
 }
 
+int path_rm_tree(char *path) {
+    rp_t *tree = path_tree(path);
+
+    if (!tree) {
+        return 1;
+    }
+
+    rp_t *item;
+    char *item_path;
+    int exit_val = 0;
+
+    for (item = rp_last(&tree); item; item = item->prev) {
+        item_path = item->data;
+
+        if (remove(item_path)) {
+            exit_val = -1;
+            goto exit;
+        }
+    }
+
+exit:
+    rp_deep_free(&tree, free);
+    return exit_val;
+}
+
 char* path_random_file(char *path) {
     rp_t *dir_list = path_list_dir(path);
 

@@ -176,6 +176,57 @@ SMALL_TEST test_is_abs(void) {
     RETURN_SCORE();
 }
 
+static void set_up_tree(char *folder_cases[], char *file_cases[]) {
+    for (; *folder_cases; folder_cases++) {
+        path_mkdir(*folder_cases, MK_MODE_755, MK_PARENTS);
+    }
+
+    for (; *file_cases; file_cases++) {
+        path_touch(*file_cases);
+    }
+}
+
+SMALL_TEST check_tree(char *folder_cases[], char *file_cases[]) {
+    SCORE_INIT();
+
+    for (; *folder_cases; folder_cases++) {
+        ASSERT(!path_exists(*folder_cases));
+    }
+
+    for (; *file_cases; file_cases++) {
+        ASSERT(!path_exists(*file_cases));
+    }
+
+    RETURN_SCORE();
+}
+
+SMALL_TEST test_rm_tree(void) {
+    SCORE_INIT();
+    char *folder_cases[] = {
+        "cache/tree",
+        "cache/tree/dir1/dir2/dir3",
+        "cache/tree/dir1",
+        "cache/tree/dir1/dir2",
+        NULL,
+    };
+
+    char *file_cases[] = {
+        "cache/tree/file1",
+        "cache/tree/dir1/file2",
+        "cache/tree/dir1/dir2/file3",
+        "cache/tree/dir1/dir2/file4",
+        "cache/tree/dir1/dir2/dir3/file5",
+        "cache/tree/dir1/dir2/dir3/file6",
+        "cache/tree/dir1/dir2/dir3/file7",
+        NULL,
+    };
+
+    set_up_tree(folder_cases, file_cases);
+    ASSERT(!path_rm_tree("cache/tree"));
+    SUBSCORE(check_tree(folder_cases, file_cases));
+    RETURN_SCORE();
+}
+
 struct case_url_fname {
     char *path;
     char *url;
@@ -478,6 +529,7 @@ BIG_TEST path_test_main(void) {
     SMALL_REPORT("path_parent()", test_parent());
     SMALL_REPORT("path_join()", test_join());
     SMALL_REPORT("path_tree()", test_tree());
+    SMALL_REPORT("path_rm_tree()", test_rm_tree());
     SMALL_REPORT("path_url_fname()", test_url_fname());
     SMALL_REPORT("path_mkdir()", test_mkdir());
     RETURN_SCORE();

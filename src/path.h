@@ -21,6 +21,7 @@ int path_is_file(char *path);
 int path_is_link(char *path);
 rp_t* path_list_dir(char *path);
 rp_t* path_tree(char *path);
+int path_rm_tree(char *path);
 char* path_random_file(char *path);
 int path_open_write(char *path);
 int path_touch(char *path);
