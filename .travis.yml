@@ -1,5 +1,9 @@
 language: c
 
+compiler:
+  - gcc
+  - clang
+
 env:
   - LD_LIBRARY_PATH=build
 
