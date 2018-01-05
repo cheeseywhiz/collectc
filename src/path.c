@@ -443,7 +443,7 @@ static rp_t* tree_append(rp_t **tree, char *path) {
     rp_t *dir_list = path_list_dir(path);
 
     if (!dir_list) {
-        return NULL;
+        return *tree;
     }
 
     rp_t *item;
@@ -493,6 +493,7 @@ int path_rm_tree(char *path) {
         item_path = item->data;
 
         if (remove(item_path)) {
+            LOG_ERRNO();
             exit_val = -1;
             goto exit;
         }
