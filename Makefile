@@ -124,6 +124,10 @@ runcollect:
 	$(BUILD)/collect reddit $(COLLECT_FLAGS)
 	$(BUILD)/collect random $(COLLECT_FLAGS)
 
+.PHONY: log
+log:
+	./.teeexit.sh make.log $(LOG)
+
 .PHONY: test
 test: builddirs $(BUILD)/test testcollect
 
@@ -139,5 +143,5 @@ version: $(version_programs)
 travisrun: version deps all test runcollect
 
 .PHONY: travis
-travis: clean
-	./.teeexit.sh travis.log $(MAKE) travisrun
+travis: LOG:=$(MAKE) travisrun
+travis: clean log

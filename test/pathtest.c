@@ -372,6 +372,34 @@ SMALL_TEST test_join(void) {
     RETURN_SCORE();
 }
 
+SMALL_TEST test_tree(void) {
+    SCORE_INIT();
+    int n_cases = 8;
+    rp_t *tree = path_tree(".");
+
+    if (!tree) {
+        EXITFAIL(n_cases);
+    }
+
+    char *cases[] = {
+        "Makefile",
+        "src",
+        "src/main.c",
+        "src/path.c",
+        "src/path.h",
+        "test",
+        "test/main.c",
+        "test/pathtest.c",
+    };
+
+    for (int i = 0; i < n_cases; i++) {
+        ASSERT(rp_contains_path(&tree, cases[i]));
+    }
+
+    rp_deep_free(&tree, free);
+    RETURN_SCORE();
+}
+
 SMALL_TEST test_mkdir_none(char *prefix, char **cases, int n_cases) {
     SCORE_INIT();
 
@@ -449,6 +477,7 @@ BIG_TEST path_test_main(void) {
     SMALL_REPORT("path_list_dir()", test_list_dir());
     SMALL_REPORT("path_parent()", test_parent());
     SMALL_REPORT("path_join()", test_join());
+    SMALL_REPORT("path_tree()", test_tree());
     SMALL_REPORT("path_url_fname()", test_url_fname());
     SMALL_REPORT("path_mkdir()", test_mkdir());
     RETURN_SCORE();
