@@ -9,10 +9,11 @@
 #include "get.h"
 #include "reg.h"
 #include "path.h"
+#include "jsmnutils.h"
 
 #define UA_PREFIX "collectc"
 
-void free_response(struct response *self) {
+void get_free_response(struct response *self) {
     free(self->type);
 
     if (self->content) {
@@ -162,7 +163,34 @@ struct response* get_image(char *url) {
     } else if (verify_image(self)) {
         return self;
     } else {
-        free_response(self);
+        get_free_response(self);
         return NULL;
     }
+}
+
+ju_json_t* get_json(char *url) {
+    struct response *re = get_response(url);
+
+    if (!re) {
+        return NULL;
+    } else if (!re->content || !regex_contains(re->type, "application/json")) {
+        get_free_response(re);
+        return NULL;
+    }
+
+    ju_json_t *json = ju_parse(re->content);
+
+    if (!json) {
+        get_free_response(re);
+        return NULL;
+    }
+
+    free(re->type);
+    free(re);
+    return json;
+}
+
+void get_free_json(ju_json_t *json) {
+    free(json->json_str);
+    ju_free(json);
 }

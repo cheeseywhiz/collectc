@@ -33,7 +33,7 @@ struct raw_base_listing {
 
 typedef struct {
     char *path;
-    struct response *re;
+    char *url;
     struct raw_base_listing *iter;
     int free_json;
     rp_t *existing_posts;
