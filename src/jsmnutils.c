@@ -22,6 +22,7 @@ ju_json_t* ju_parse(char *json_str) {
     self->n_tokens = jsmn_parse(&parser, json_str, strlen(json_str), NULL, 0);
 
     if (0 > self->n_tokens) {
+        EXCEPTION("jsmn_parse() failed");
         free(self);
         return NULL;
     }
@@ -40,6 +41,7 @@ ju_json_t* ju_parse(char *json_str) {
     if (0 < jsmn_parse(&parser, self->json_str, strlen(json_str), self->tokens, self->n_tokens)) {
         return self;
     } else {
+        EXCEPTION("jsmn_parse() failed");
         ju_free(self);  /* self->tokens and self */
         return NULL;
     }
@@ -78,6 +80,7 @@ int ju_object_get(ju_json_t *self, int object, char *key) {
     }
 
     free(iter);
+    EXCEPTION("key error: %s", key);
     return -1;
 }
 
@@ -85,6 +88,7 @@ struct ju_array_iter* ju_array_init(ju_json_t *self, int array_i) {
     int tok_type = self->tokens[array_i].type;
 
     if (tok_type != JSMN_ARRAY && tok_type != JSMN_OBJECT) {
+        EXCEPTION("given token is not an array or object");
         return NULL;
     }
 

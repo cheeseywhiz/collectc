@@ -58,6 +58,7 @@ struct response* get_response(char *url) {
     CURL *curl = curl_easy_init();
 
     if (!curl) {
+        EXCEPTION("curl_easy_init() failed");
         curl_global_cleanup();
         return NULL;
     }
@@ -79,7 +80,7 @@ struct response* get_response(char *url) {
     CURLcode res = curl_easy_perform(curl);
 
     if (res != CURLE_OK) {
-        ERROR("curl_easy_perform failed (%s)", curl_easy_strerror(res));
+        EXCEPTION("curl_easy_perform failed (%s)", curl_easy_strerror(res));
         goto cleanup;
     }
 
@@ -123,8 +124,10 @@ int get_download_response(struct response *self, char *path) {
     int file = path_open_write(path);
 
     if (file < 0) {
+        LOG_ERRNO();
         return 1;
     } else if (write(file, self->content, self->length) < 0) {
+        LOG_ERRNO();
         status = 1;
     }
 
@@ -174,6 +177,7 @@ ju_json_t* get_json(char *url) {
     if (!re) {
         return NULL;
     } else if (!re->content || !regex_contains(re->type, "application/json")) {
+        EXCEPTION("content and type check failed");
         get_free_response(re);
         return NULL;
     }

@@ -9,7 +9,8 @@ BIG_TEST path_test_main(void);
 BIG_TEST rp_test_main(void);
 BIG_TEST raw_test_main(void);
 
-int main(void) {
+int main(int argc, char *argv[]) {
+    if (argc) log_init_prog_name(argv);
     SET_LOG_LEVEL(LOG_WARNING);
     rand_reseed();
     SCORE_INIT();
