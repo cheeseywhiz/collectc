@@ -6,12 +6,12 @@ OBJ:=$(BUILD)/obj
 DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
 
-VERSION:=0.3.2
+VERSION:=0.3.3
 
 autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
 ifeq ($(DO_AUTOLINK),1)
-	ECHO:=$(shell echo DO_AUTOLINK=1 set >&2)
+	INFO:=$(info $(origin DO_AUTOLINK): DO_AUTOLINK=1)
 	AUTOLINK:=$(autolink)
 else
 	AUTOLINK:=
@@ -38,7 +38,7 @@ SRC_HDR:=$(addprefix $(SRC)/,$(addsuffix .h,$(SRC_HDR)))
 TEST_HDR:=$(addprefix $(TEST)/,$(addsuffix .h,$(TEST_HDR)))
 
 ifeq ($(DEBUG),1)
-	ECHO:=$(shell echo DEBUG=1 set >&2)
+	INFO:=$(info $(origin DEBUG): DEBUG=1)
 	CFLAGS+=-Og -g3
 	CFLAGS+=-D_COLLECT_DEBUG
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
@@ -53,8 +53,10 @@ HAS_VALGRIND:=$(shell command -v valgrind 2>/dev/null)
 ifdef HAS_VALGRIND
 	VALGRIND+=valgrind $(VFLAGS)
 else
-	ECHO:=$(shell echo valgrind not found >&2)
+	INFO:=$(info NOT FOUND: valgrind)
 endif
+
+INFO:=$(info $(origin CC): CC=$(CC))
 
 .PHONY: all
 all: builddirs $(BUILD)/collect

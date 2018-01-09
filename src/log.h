@@ -2,6 +2,7 @@
 #define LOG_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 char* strerror(int errnum);
 
@@ -20,8 +21,10 @@ void log_init_prog_name(char *argv[]);
 void log_backtrace(void);
 
 #define LOG_NAME_MAX 255
-#define LOG_NAME_SIZE 255 + 3
+#define LOG_NAME_SIZE LOG_NAME_MAX + 3
 extern int log_level;
+extern int log_strict_exceptions;
+extern int log_surpress_exceptions;
 extern char prog_name[LOG_NAME_SIZE];
 
 #ifdef _COLLECT_DEBUG
@@ -30,9 +33,9 @@ extern char prog_name[LOG_NAME_SIZE];
 # define LOG_LEVEL_RESET() log_level = 0
 #endif
 
-#define ADD_LEVEL(option) log_level |= option
-#define REMOVE_LEVEL(option) log_level &= ~option
-#define __SET_LOWER(new_level, option) if (new_level <= option) ADD_LEVEL(option)
+#define LOG_LEVEL_ADD(option) log_level |= option
+#define LOG_LEVEL_REMOVE(option) log_level &= ~option
+#define __SET_LOWER(new_level, option) if (new_level <= option) LOG_LEVEL_ADD(option)
 
 #define SET_LOG_LEVEL(level) \
     LOG_LEVEL_RESET(); \
@@ -69,7 +72,13 @@ extern char prog_name[LOG_NAME_SIZE];
 #define LOG_LEVEL(level, args...) if (log_level & level) { PRINT(level, args); }
 #define LOG_BACKTRACE(level, args...) if (log_level & level) { log_backtrace(); PRINT(level, args); }
 #define CRITICAL(args...) LOG_LEVEL(LOG_CRITICAL, args)
-#define EXCEPTION(args...) LOG_BACKTRACE(LOG_EXCEPTION, args)
+#define EXCEPTION(args...) \
+    if (!log_surpress_exceptions) { \
+        LOG_BACKTRACE(LOG_EXCEPTION, args); \
+        if (log_strict_exceptions) { \
+            exit(EXIT_FAILURE); \
+        } \
+    }
 #define ERROR(args...) LOG_LEVEL(LOG_ERROR, args)
 #define WARNING(args...) LOG_LEVEL(LOG_WARNING, args)
 #define INFO(args...) LOG_LEVEL(LOG_INFO, args)

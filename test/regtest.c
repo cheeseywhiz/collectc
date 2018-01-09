@@ -200,10 +200,9 @@ SMALL_TEST test_str_slice(void) {
 
     for (int i = 0; i < n_cases; i++) {
         struct case_str_slice case_ = cases[i];
-        REMOVE_LEVEL(LOG_EXCEPTION);
+        log_surpress_exceptions = 1;
         char *actual = regex_str_slice(string, case_.start, case_.end);
-        ADD_LEVEL(LOG_EXCEPTION);
-        int cmp_eq = 0;
+        log_surpress_exceptions = 0;
 
         if ((case_.expected == NULL) && (actual == NULL)) {
             PASS();
