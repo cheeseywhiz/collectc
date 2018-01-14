@@ -29,8 +29,10 @@ extern char prog_name[LOG_NAME_SIZE];
 
 #ifdef _COLLECT_DEBUG
 # define LOG_LEVEL_RESET() log_level = LOG_DEBUG
+# define LOG_FILE_LINE() STDERR("%s (%d): ", __FILE__, __LINE__)
 #else
 # define LOG_LEVEL_RESET() log_level = 0
+# define LOG_FILE_LINE()
 #endif
 
 #define LOG_LEVEL_ADD(option) log_level |= option
@@ -62,6 +64,7 @@ extern char prog_name[LOG_NAME_SIZE];
         STDERR("info: "); \
     } else if (level & LOG_DEBUG) { \
         STDERR("debug: "); \
+        LOG_FILE_LINE(); \
     }
 
 #define PRINT(level, args...) \

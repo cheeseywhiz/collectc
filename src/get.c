@@ -26,26 +26,52 @@ void get_free_response(struct response *self) {
 struct var_len_buffer {
     char *content;
     size_t length;
+    size_t size;
 };
 
 #define __VAR_LEN_BUFFER(content_, length_) \
     (struct var_len_buffer) { \
         .content = content_, \
         .length = length_, \
+        .size = 0, \
     }
 
 #define __NEW_BUFFER() __VAR_LEN_BUFFER(NULL, 0)
 
-static size_t append_buffer(char *buffer, size_t size, size_t n_items, struct var_len_buffer *self) {
-    size_t buffer_len = size * n_items;
-    char *ptr = realloc(self->content, self->length + buffer_len + 1);
+char* buffer_realloc(struct var_len_buffer *self, size_t length) {
+    size_t size = self->size;
+
+    if (length <= size) {
+        return self->content;
+    }
+
+    if (!size) {
+        size = 1 << 1;
+    }
+
+    do {
+        size = (size >> 1) + size;
+    } while (length > size);
+
+    char *ptr = realloc(self->content, size + 1);
 
     if (ptr) {
         self->content = ptr;
-    } else {
+    } else if (!ptr) {
         LOG_ERRNO();
+        return NULL;
+    }
+
+    self->size = size;
+    return self->content;
+}
+
+static size_t append_buffer(char *buffer, size_t size, size_t n_items, struct var_len_buffer *self) {
+    size_t buffer_len = size * n_items;
+
+    if (!buffer_realloc(self, self->length + buffer_len)) {
         return 0;
-    };
+    }
 
     memcpy(self->content + self->length, buffer, buffer_len);
     self->length += buffer_len;
