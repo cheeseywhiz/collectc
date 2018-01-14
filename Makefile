@@ -24,7 +24,7 @@ TEST_HDR:=test
 
 COLLECT_FLAGS:=-nrav -ocache
 
-CFLAGS+=-Wall -Wextra -std=c99 -fPIC -D_GNU_SOURCE -DCOLLECT_VERSION=\"$(VERSION)\"
+CFLAGS+=-Wall -Wextra -std=gnu11 -fPIC -DCOLLECT_VERSION=\"$(VERSION)\"
 CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 
 TEST_CFLAGS:=-I$(SRC)
@@ -44,7 +44,7 @@ ifeq ($(DEBUG),1)
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
 	VALGRIND:=-
 else
-	CFLAGS+=-O2
+	CFLAGS+=
 	VALGRIND:=
 endif
 

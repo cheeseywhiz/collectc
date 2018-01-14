@@ -43,9 +43,7 @@ char* buffer_realloc(struct var_len_buffer *self, size_t length) {
 
     if (length <= size) {
         return self->content;
-    }
-
-    if (!size) {
+    } else if (!size) {
         size = 1 << 1;
     }
 
@@ -57,7 +55,7 @@ char* buffer_realloc(struct var_len_buffer *self, size_t length) {
 
     if (ptr) {
         self->content = ptr;
-    } else if (!ptr) {
+    } else {
         LOG_ERRNO();
         return NULL;
     }

@@ -5,19 +5,6 @@
 #include "log.h"
 #include "reg.h"
 
-#ifndef _GNU_SOURCE
-char* strdup(char *str) {
-    char *new = calloc(strlen(str) + 1, 1);
-
-    if (!new) {
-        return NULL;
-    }
-
-    strcpy(new, str);
-    return new;
-}
-#endif /* _GNU_SOURCE */
-
 char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     char *needle;
     regex_t reg;
