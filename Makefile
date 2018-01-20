@@ -124,6 +124,7 @@ testcollect: $(BUILD)/test valgrind
 runcollect: $(BUILD)/collect
 	$< -V
 	$< -h
+	$< reddit -d $(COLLECT_FLAGS)
 	$< reddit $(COLLECT_FLAGS)
 	$< reddit $(COLLECT_FLAGS)
 	$< random $(COLLECT_FLAGS)

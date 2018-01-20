@@ -5,7 +5,7 @@
 
 #include "collect.h"
 
-char *usage = "collect [-hV] {reddit,random,clear} [-anrv] [-o DIR] [-u URL]\n\
+char *usage = "collect [-hV] {reddit,random,clear} [-adnrv] [-o DIR] [-u URL]\n\
 \n\
 Collect an image from a Reddit URL.\n\
 \n\
@@ -16,6 +16,7 @@ subcommands:\n\
 \n\
 options:\n\
 \t-a\tfallback all\n\
+\t-d\tdry run; don't download\n\
 \t-h\thelp\n\
 \t-n\tfallback new\n\
 \t-r\tno repeat\n\
@@ -71,8 +72,9 @@ int main(int argc, char *argv[]) {
     rand_reseed();
     char *dir = "~/.cache/collectc";
     char *url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
-    int raw_flags = RAW_RANDOM | RAW_DOWNLOAD;
+    int raw_flags = RAW_RANDOM;
     int verbosity = 0;
+    int dry_run = 0;
     int flag;
     opterr = 0;
 
@@ -92,10 +94,13 @@ int main(int argc, char *argv[]) {
             return 0;
     }
 
-    while ((flag = getopt(argc, argv, "anrvo:u:")) != -1) {
+    while ((flag = getopt(argc, argv, "adnrvo:u:")) != -1) {
         switch (flag) {
             case 'a':
                 raw_flags |= RAW_ALL;
+                break;
+            case 'd':
+                dry_run = 1;
                 break;
             case 'n':
                 raw_flags |= RAW_NEW;
@@ -121,6 +126,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (!dry_run) {
+        raw_flags |= RAW_DOWNLOAD;
+    }
+
     if (verbosity == 0) {
         SET_LOG_LEVEL(LOG_WARNING);
     } else if (verbosity == 1) {
@@ -143,7 +152,7 @@ int main(int argc, char *argv[]) {
         goto exit;
     }
 
-    if (path_mkdir(dir, MK_MODE_755, MK_EXISTS_OK)) {
+    if (!dry_run && path_mkdir(dir, MK_MODE_755, MK_EXISTS_OK)) {
         exit_val = 1;
         goto exit;
     }
