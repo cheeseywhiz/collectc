@@ -6,7 +6,7 @@ OBJ:=$(BUILD)/obj
 DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
 
-VERSION:=0.3.3
+VERSION:=0.3.4
 
 autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
