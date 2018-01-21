@@ -72,10 +72,10 @@ int main(int argc, char *argv[]) {
     rand_reseed();
     char *dir = "~/.cache/collectc";
     char *url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
-    int raw_flags = RAW_RANDOM;
+    raw_flags flags = RAW_RANDOM;
     int verbosity = 0;
     int dry_run = 0;
-    int flag;
+    int opt;
     opterr = 0;
 
     if (argc == 1) {
@@ -94,19 +94,19 @@ int main(int argc, char *argv[]) {
             return 0;
     }
 
-    while ((flag = getopt(argc, argv, "adnrvo:u:")) != -1) {
-        switch (flag) {
+    while ((opt = getopt(argc, argv, "adnrvo:u:")) != -1) {
+        switch (opt) {
             case 'a':
-                raw_flags |= RAW_ALL;
+                flags |= RAW_ALL;
                 break;
             case 'd':
                 dry_run = 1;
                 break;
             case 'n':
-                raw_flags |= RAW_NEW;
+                flags |= RAW_NEW;
                 break;
             case 'r':
-                raw_flags |= RAW_NO_REPEAT;
+                flags |= RAW_NO_REPEAT;
                 break;
             case 'v':
                 verbosity++;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!dry_run) {
-        raw_flags |= RAW_DOWNLOAD;
+        flags |= RAW_DOWNLOAD;
     }
 
     if (verbosity == 0) {
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
         goto exit;
     }
 
-    char *path = subcommand(dir, url, raw_flags);
+    char *path = subcommand(dir, url, flags);
 
     if (!path) {
         exit_val = 1;

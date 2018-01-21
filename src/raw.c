@@ -277,7 +277,7 @@ static struct raw_post* listing_next_no_repeat_download(raw_listing *self, int r
 
 typedef struct raw_post* (*listing_next_func_t)(raw_listing *self, int random);
 
-static listing_next_func_t get_next_func(int flags) {
+static listing_next_func_t get_next_func(raw_flags flags) {
     if (flags & RAW_NO_REPEAT) {
         if (flags & RAW_DOWNLOAD) {
             return listing_next_no_repeat_download;
@@ -291,7 +291,7 @@ static listing_next_func_t get_next_func(int flags) {
     return listing_next_post;
 }
 
-struct raw_post* raw_listing_next(raw_listing *self, int flags) {
+struct raw_post* raw_listing_next(raw_listing *self, raw_flags flags) {
     return get_next_func(flags)(self, flags & RAW_RANDOM);
 }
 
@@ -332,7 +332,7 @@ static struct listing_fallback fallback_random(raw_listing *self) {
     return __LISTING_FALLBACK(path, post);
 }
 
-static struct listing_fallback fallback_flags(raw_listing *self, int flags) {
+static struct listing_fallback fallback_flags(raw_listing *self, raw_flags flags) {
     if (flags & RAW_NEW) {
         DEBUG("Falling back on image from new");
         struct raw_post *post = rp_pop_random(&self->existing_posts);
@@ -353,7 +353,7 @@ fail:
     return __LISTING_FALLBACK(NULL, NULL);
 }
 
-char* raw_listing_next_fallback(raw_listing *self, int flags) {
+char* raw_listing_next_fallback(raw_listing *self, raw_flags flags) {
     struct raw_post *post = raw_listing_next(self, flags);
     char *path = NULL;
 

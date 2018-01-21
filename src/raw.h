@@ -5,13 +5,13 @@
 #include "get.h"
 #include "random_popper.h"
 
-enum raw_flags {
+typedef enum {
     RAW_NO_REPEAT = 1 << 0,
     RAW_RANDOM = 1 << 1,
     RAW_DOWNLOAD = 1 << 2,
     RAW_NEW = 1 << 3,
     RAW_ALL = 1 << 4,
-};
+} raw_flags;
 
 struct raw_post {
     ju_json_t *json;
@@ -43,7 +43,7 @@ typedef struct {
 raw_listing* raw_listing_data(char *path, ju_json_t *json);
 raw_listing* raw_listing_url(char *path, char *url);
 void raw_free_listing(raw_listing *self);
-struct raw_post* raw_listing_next(raw_listing *self, int flags);
-char* raw_listing_next_fallback(raw_listing *self, int flags);
+struct raw_post* raw_listing_next(raw_listing *self, raw_flags flags);
+char* raw_listing_next_fallback(raw_listing *self, raw_flags flags);
 
 #endif
