@@ -86,6 +86,7 @@ static char* fix_double_dots(char *path) {
     path = strdup(path);
 
     if (!path) {
+        EXCEPTION("strdup() failed");
         return NULL;
     } else if (!regex_contains(path, "..")) {
         return path;
@@ -135,6 +136,7 @@ static char* trim_path_ends(char *path) {
     path = strdup(path);
 
     if (!path) {
+        EXCEPTION("strdup() failed");
         return NULL;
     }
 
@@ -165,6 +167,7 @@ char* path_norm(char *path) {
     path = strdup(path);
 
     if (!path) {
+        EXCEPTION("strdup() failed");
         return NULL;
     }
 
@@ -210,6 +213,7 @@ char* path_home(void) {
         path = getenv("HOME");
 
         if (!path) {
+            EXCEPTION("user passwd entry or HOME env variable not found");
             return NULL;
         }
     }
@@ -232,6 +236,7 @@ char* path_basename(char *path) {
     path = strdup(path);
 
     if (!path) {
+        EXCEPTION("strdup() failed");
         return NULL;
     }
 
@@ -246,6 +251,7 @@ char* path_parent(char *path) {
     path = strdup(path);
 
     if (!path) {
+        EXCEPTION("strdup() failed");
         return NULL;
     }
 
@@ -297,6 +303,7 @@ char* path_join(char *path, char *other) {
     free(path);
 
     if (spf_err) {
+        EXCEPTION("sprintf() failed");
         return NULL;
     }
 
@@ -402,6 +409,7 @@ rp_t* path_list_dir(char *path) {
     if (!path) {
         return NULL;
     } else if (!path_is_dir(path)) {
+        EXCEPTION("path is not dir: %s", path);
         free(path);
         return NULL;
     }
@@ -409,6 +417,7 @@ rp_t* path_list_dir(char *path) {
     DIR *dir = opendir(path);
 
     if (!dir) {
+        LOG_ERRNO();
         free(path);
         return NULL;
     }
@@ -471,6 +480,7 @@ rp_t* path_tree(char *path) {
     char *path_copy = strdup(path);
 
     if (!path_copy) {
+        EXCEPTION("strdup() failed");
         return NULL;
     }
 
@@ -574,8 +584,9 @@ int path_mkdir(char *path, int mode, int mk_flags) {
         free(path);
         return 0;
     } else if (!(mk_flags & MK_PARENTS)) {
+        LOG_ERRNO();
         free(path);
-        return 1;
+        return path_failed;
     }
 
     char *parent = path_parent(path);

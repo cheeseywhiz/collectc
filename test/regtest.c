@@ -2,6 +2,7 @@
 #include <string.h>
 #include <regex.h>
 
+#include "log.h"
 #include "reg.h"
 #include "test.h"
 
@@ -199,17 +200,21 @@ SMALL_TEST test_str_slice(void) {
 
     for (int i = 0; i < n_cases; i++) {
         struct case_str_slice case_ = cases[i];
+        log_surpress_exceptions = 1;
         char *actual = regex_str_slice(string, case_.start, case_.end);
-        int cmp_eq = 0;
+        log_surpress_exceptions = 0;
 
-        if (actual) {
-            cmp_eq = strcmp(case_.expected, actual) == 0;
-            free(actual);
-        } else if (!case_.expected) {
-            cmp_eq = 1;
+        if ((case_.expected == NULL) && (actual == NULL)) {
+            PASS();
+        } else if ((case_.expected != NULL) && (actual != NULL)){
+            ASSERT(!strcmp(case_.expected, actual));
+        } else {
+            FAIL();
         }
 
-        ASSERT(cmp_eq);
+        if (actual) {
+            free(actual);
+        }
     }
 
     RETURN_SCORE();

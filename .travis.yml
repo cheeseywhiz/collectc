@@ -1,9 +1,17 @@
 language: c
+sudo: false
+
+compiler:
+  - gcc
+  - clang
 
 env:
   - LD_LIBRARY_PATH=build
 
-before_install: sudo apt-get install valgrind
+addons:
+  apt:
+    packages:
+      - valgrind
 
 script: make travis
 

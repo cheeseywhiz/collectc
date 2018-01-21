@@ -32,11 +32,11 @@ SMALL_TEST test_array_init(struct ju_array_iter *iter) {
 
 SMALL_TEST test_array_next(struct ju_array_iter *iter) {
     SCORE_INIT();
-    int expected_values[] = {1, 5, 11};
-    int actual, i = 0;
+    int n_cases = 3;
+    int cases[] = {1, 5, 11};
 
-    for (actual = ju_array_next(iter); actual >= 0; actual = ju_array_next(iter)) {
-        ASSERT(actual == expected_values[i++]);
+    for (int i = 0; i < n_cases; i++) {
+        ASSERT(cases[i] == ju_array_next(iter));
     }
 
     RETURN_SCORE();

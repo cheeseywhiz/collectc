@@ -62,7 +62,7 @@ int raw_post_download(struct raw_post *self) {
     }
 
     int result = get_download_response(re, self->path);
-    free_response(re);
+    get_free_response(re);
 
     if (!result) {
         DEBUG("Collected new image: %s", self->url);
@@ -149,7 +149,7 @@ raw_listing* raw_listing_data(char *path, ju_json_t *json) {
         return NULL;
     }
 
-    self->re = NULL;
+    self->url = NULL;
     self->iter = new_base_listing(json);
 
     if (!self->iter) {
@@ -164,28 +164,20 @@ raw_listing* raw_listing_data(char *path, ju_json_t *json) {
 }
 
 raw_listing* raw_listing_url(char *path, char *url) {
-    struct response *re = get_response(url);
-
-    if (!re) {
-        return NULL;
-    }
-
-    ju_json_t *json = ju_parse(re->content);
+    ju_json_t *json = get_json(url);
 
     if (!json) {
-        free_response(re);
         return NULL;
     }
 
     raw_listing *self = raw_listing_data(path, json);
 
     if (!self) {
-        ju_free(json);
-        free_response(re);
+        get_free_json(json);
         return NULL;
     }
 
-    self->re = re;
+    self->url = url;
     self->free_json = 1;
     return self;
 }
@@ -195,15 +187,10 @@ void raw_free_listing(raw_listing *self) {
     rp_shallow_free(&self->existing_posts);
 
     if (self->free_json) {
-        ju_free(self->iter->json);
+        get_free_json(self->iter->json);
     }
 
     free_base_listing(self->iter);
-
-    if (self->re) {
-        free_response(self->re);
-    }
-
     free(self->path);
     free(self);
 }
@@ -290,7 +277,7 @@ static struct raw_post* listing_next_no_repeat_download(raw_listing *self, int r
 
 typedef struct raw_post* (*listing_next_func_t)(raw_listing *self, int random);
 
-static listing_next_func_t get_next_func(int flags) {
+static listing_next_func_t get_next_func(raw_flags flags) {
     if (flags & RAW_NO_REPEAT) {
         if (flags & RAW_DOWNLOAD) {
             return listing_next_no_repeat_download;
@@ -304,7 +291,7 @@ static listing_next_func_t get_next_func(int flags) {
     return listing_next_post;
 }
 
-struct raw_post* raw_listing_next(raw_listing *self, int flags) {
+struct raw_post* raw_listing_next(raw_listing *self, raw_flags flags) {
     return get_next_func(flags)(self, flags & RAW_RANDOM);
 }
 
@@ -345,7 +332,7 @@ static struct listing_fallback fallback_random(raw_listing *self) {
     return __LISTING_FALLBACK(path, post);
 }
 
-static struct listing_fallback fallback_flags(raw_listing *self, int flags) {
+static struct listing_fallback fallback_flags(raw_listing *self, raw_flags flags) {
     if (flags & RAW_NEW) {
         DEBUG("Falling back on image from new");
         struct raw_post *post = rp_pop_random(&self->existing_posts);
@@ -366,12 +353,12 @@ fail:
     return __LISTING_FALLBACK(NULL, NULL);
 }
 
-char* raw_listing_next_fallback(raw_listing *self, int flags) {
+char* raw_listing_next_fallback(raw_listing *self, raw_flags flags) {
     struct raw_post *post = raw_listing_next(self, flags);
     char *path = NULL;
 
     if (!post) {
-        DEBUG("Collection failed: %s", self->re->url);
+        DEBUG("Collection failed: %s", self->url);
         struct listing_fallback fallback = fallback_flags(self, flags);
         path = fallback.path;
         post = fallback.post;

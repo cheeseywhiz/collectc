@@ -5,26 +5,17 @@
 #include "log.h"
 #include "reg.h"
 
-#ifndef _GNU_SOURCE
-char* strdup(char *str) {
-    char *new = calloc(strlen(str) + 1, 1);
-
-    if (!new) {
-        return NULL;
-    }
-
-    strcpy(new, str);
-    return new;
-}
-#endif /* _GNU_SOURCE */
-
 char* regex_match_one_subexpr(char *pattern, char *haystack, int cflags) {
     char *needle;
     regex_t reg;
     int n_matches = 2;
     regmatch_t pmatch[n_matches];
 
-    if (regcomp(&reg, pattern, REG_EXTENDED | cflags)) goto fail;
+    if (regcomp(&reg, pattern, REG_EXTENDED | cflags)) {
+        EXCEPTION("regcomp() failed");
+        goto fail;
+    }
+
     if (regexec(&reg, haystack, n_matches, pmatch, 0)) goto fail;
 
     needle = regex_str_slice(haystack, pmatch[1].rm_so, pmatch[1].rm_eo);
@@ -176,6 +167,7 @@ char* regex_str_slice(char *src, int start, int end) {
     } else if (dest_length == 0) {
         return calloc(1, 1);
     } else {
+        EXCEPTION("indices out of bounds");
         return NULL;
     };
 }

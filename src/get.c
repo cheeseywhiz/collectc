@@ -9,10 +9,11 @@
 #include "get.h"
 #include "reg.h"
 #include "path.h"
+#include "jsmnutils.h"
 
 #define UA_PREFIX "collectc"
 
-void free_response(struct response *self) {
+void get_free_response(struct response *self) {
     free(self->type);
 
     if (self->content) {
@@ -25,26 +26,50 @@ void free_response(struct response *self) {
 struct var_len_buffer {
     char *content;
     size_t length;
+    size_t size;
 };
 
 #define __VAR_LEN_BUFFER(content_, length_) \
     (struct var_len_buffer) { \
         .content = content_, \
         .length = length_, \
+        .size = 0, \
     }
 
 #define __NEW_BUFFER() __VAR_LEN_BUFFER(NULL, 0)
 
-static size_t append_buffer(char *buffer, size_t size, size_t n_items, struct var_len_buffer *self) {
-    size_t buffer_len = size * n_items;
-    char *ptr = realloc(self->content, self->length + buffer_len + 1);
+char* buffer_realloc(struct var_len_buffer *self, size_t length) {
+    size_t size = self->size;
+
+    if (length <= size) {
+        return self->content;
+    } else if (!size) {
+        size = 1 << 1;
+    }
+
+    do {
+        size = (size >> 1) + size;
+    } while (length > size);
+
+    char *ptr = realloc(self->content, size + 1);
 
     if (ptr) {
         self->content = ptr;
     } else {
         LOG_ERRNO();
+        return NULL;
+    }
+
+    self->size = size;
+    return self->content;
+}
+
+static size_t append_buffer(char *buffer, size_t size, size_t n_items, struct var_len_buffer *self) {
+    size_t buffer_len = size * n_items;
+
+    if (!buffer_realloc(self, self->length + buffer_len)) {
         return 0;
-    };
+    }
 
     memcpy(self->content + self->length, buffer, buffer_len);
     self->length += buffer_len;
@@ -57,6 +82,7 @@ struct response* get_response(char *url) {
     CURL *curl = curl_easy_init();
 
     if (!curl) {
+        EXCEPTION("curl_easy_init() failed");
         curl_global_cleanup();
         return NULL;
     }
@@ -78,7 +104,7 @@ struct response* get_response(char *url) {
     CURLcode res = curl_easy_perform(curl);
 
     if (res != CURLE_OK) {
-        ERROR("curl_easy_perform failed (%s)", curl_easy_strerror(res));
+        EXCEPTION("curl_easy_perform failed (%s)", curl_easy_strerror(res));
         goto cleanup;
     }
 
@@ -122,8 +148,10 @@ int get_download_response(struct response *self, char *path) {
     int file = path_open_write(path);
 
     if (file < 0) {
+        LOG_ERRNO();
         return 1;
     } else if (write(file, self->content, self->length) < 0) {
+        LOG_ERRNO();
         status = 1;
     }
 
@@ -162,7 +190,35 @@ struct response* get_image(char *url) {
     } else if (verify_image(self)) {
         return self;
     } else {
-        free_response(self);
+        get_free_response(self);
         return NULL;
     }
+}
+
+ju_json_t* get_json(char *url) {
+    struct response *re = get_response(url);
+
+    if (!re) {
+        return NULL;
+    } else if (!re->content || !regex_contains(re->type, "application/json")) {
+        EXCEPTION("content and type check failed");
+        get_free_response(re);
+        return NULL;
+    }
+
+    ju_json_t *json = ju_parse(re->content);
+
+    if (!json) {
+        get_free_response(re);
+        return NULL;
+    }
+
+    free(re->type);
+    free(re);
+    return json;
+}
+
+void get_free_json(ju_json_t *json) {
+    free(json->json_str);
+    ju_free(json);
 }

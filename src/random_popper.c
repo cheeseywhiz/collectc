@@ -65,6 +65,7 @@ rp_t* rp_get_index(rp_t **self, size_t index) {
     if (!*self) {
         return NULL;
     } else if (index >= rp_len(self)) {
+        EXCEPTION("index out of bounds");
         return NULL;
     }
 
@@ -72,6 +73,7 @@ rp_t* rp_get_index(rp_t **self, size_t index) {
 
     for (size_t i = 0; i < index; i++) {
         if (!item) {
+            EXCEPTION("rp_t->item is unexpectedly NULL");
             return NULL;
         }
 
@@ -95,7 +97,11 @@ void* rp_pop_index(rp_t **self, size_t index) {
     rp_t *item;
     size_t self_len = rp_len(self);
 
-    if (!self_len || index >= self_len) {
+    if (!self_len) {
+        if (index) EXCEPTION("index out of bounds");
+        item = NULL;
+    } else if (index >= self_len) {
+        EXCEPTION("index out of bounds");
         item = NULL;
     } else if (!index || self_len == 1) {
         item = *self;

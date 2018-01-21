@@ -22,14 +22,14 @@ struct score {
 #define SCORE_INIT() struct score subscore, score_local = NEW_SCORE()
 #define PASSING score_local.passing
 #define FAILING score_local.failing
-#define PASS() PASSING++
-#define FAIL() FAILING++
-#define ASSERT(bool) if (bool) PASS(); else FAIL()
 #define ADD_PASS(n) PASSING += n
 #define ADD_FAIL(n) FAILING += n
 #define ADD_SCORE(pass, fail) \
     ADD_PASS(pass); \
     ADD_FAIL(fail)
+#define PASS() ADD_PASS(1)
+#define FAIL() ADD_FAIL(1)
+#define ASSERT(bool) if (bool) { PASS(); } else { FAIL(); }
 #define SUBSCORE(score) \
     subscore = score; \
     ADD_SCORE(subscore.passing, subscore.failing)
