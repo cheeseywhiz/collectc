@@ -40,6 +40,7 @@ void log_backtrace(void) {
     STDERR("%s", prog_name);
     STDERR("backtrace: \n");
 
+    /* Index 0 is argv[0], so we can skip */
     for (size_t i = 1; i < actual_size; i++) {
         STDERR("%s\n", strings[i]);
     }

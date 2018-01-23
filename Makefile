@@ -6,7 +6,7 @@ OBJ:=$(BUILD)/obj
 DIRS:=$(BUILD) $(OBJ)
 TEST_PROGRAM:=$(BUILD)/test
 
-VERSION:=0.3.4
+VERSION:=0.3.5
 
 autolink+=-Wl,-rpath=$(BUILD),-rpath-link=$(BUILD)
 
@@ -29,6 +29,8 @@ CFLAGS+=-DJSMN_PARENT_LINKS -I$(LIB)/jsmn
 
 TEST_CFLAGS:=-I$(SRC)
 TEST_CFLAGS+=-Og -g3 -Wno-unused-variable
+
+LIBCURL:=$(shell pkg-config --libs --cflags libcurl)
 
 version_cmds:=curl-config $(CC) $(LD) $(MAKE)
 
@@ -93,13 +95,13 @@ deps: jsmn
 $(OBJ)/%.o: $(SRC)/%.c $(SRC_HDR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD)/libcollect.so: LDLIBS+=-ljsmn -lm $(shell pkg-config --libs --cflags libcurl)
+$(BUILD)/libcollect.so: LDLIBS+=-ljsmn -lm $(LIBCURL)
 $(BUILD)/libcollect.so: LDFLAGS+=-L$(LIB)/jsmn
 $(BUILD)/libcollect.so: $(OBJECTS)
 	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(BUILD)/collect: $(SRC)/main.c $(BUILD)/libcollect.so
-	$(CC) $(CFLAGS) $(AUTOLINK) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect
+	$(CC) $(CFLAGS) $(AUTOLINK) -o $@ $< $(LDFLAGS) -L$(BUILD) $(LDLIBS) -lcollect $(LIBCURL)
 
 # TEST_OBJS
 $(OBJ)/%.o: $(TEST)/%.c $(SRC_HDR) $(TEST_HDR)
@@ -150,8 +152,8 @@ $(version_cmds):
 version: $(version_cmds)
 
 .PHONY: travisrun
-travisrun: version deps all test runcollect
+travisrun: version all test runcollect
 
 .PHONY: travis
 travis: LOG:=$(MAKE) travisrun
-travis: clean log
+travis: reset log

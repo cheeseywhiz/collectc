@@ -29,10 +29,10 @@ extern char prog_name[LOG_NAME_SIZE];
 
 #ifdef _COLLECT_DEBUG
 # define LOG_LEVEL_RESET() log_level = LOG_DEBUG
-# define LOG_FILE_LINE() STDERR("%s (%d): ", __FILE__, __LINE__)
+# define DEBUG_FILE_LINE() LOG_FILE_LINE()
 #else
 # define LOG_LEVEL_RESET() log_level = 0
-# define LOG_FILE_LINE()
+# define DEBUG_FILE_LINE()
 #endif
 
 #define LOG_LEVEL_ADD(option) log_level |= option
@@ -49,6 +49,7 @@ extern char prog_name[LOG_NAME_SIZE];
     __SET_LOWER(level, LOG_DEBUG)
 
 #define STDERR(args...) fprintf(stderr, args)
+#define LOG_FILE_LINE() STDERR("%s (%d): ", __FILE__, __LINE__)
 #define PRINT_LEVEL(level) \
     STDERR("%s", prog_name); \
     if (0) { \
@@ -56,6 +57,7 @@ extern char prog_name[LOG_NAME_SIZE];
         STDERR("critical: "); \
     } else if (level & LOG_EXCEPTION) { \
         STDERR("exception: "); \
+        LOG_FILE_LINE(); \
     } else if (level & LOG_ERROR) { \
         STDERR("error: "); \
     } else if (level & LOG_WARNING) { \
@@ -64,7 +66,7 @@ extern char prog_name[LOG_NAME_SIZE];
         STDERR("info: "); \
     } else if (level & LOG_DEBUG) { \
         STDERR("debug: "); \
-        LOG_FILE_LINE(); \
+        DEBUG_FILE_LINE(); \
     }
 
 #define PRINT(level, args...) \

@@ -13,22 +13,6 @@
 
 #define UA_PREFIX "collectc"
 
-void get_free_response(struct response *self) {
-    free(self->type);
-
-    if (self->content) {
-        free(self->content);
-    }
-
-    free(self);
-}
-
-struct var_len_buffer {
-    char *content;
-    size_t length;
-    size_t size;
-};
-
 #define __VAR_LEN_BUFFER(content_, length_) \
     (struct var_len_buffer) { \
         .content = content_, \
@@ -38,7 +22,7 @@ struct var_len_buffer {
 
 #define __NEW_BUFFER() __VAR_LEN_BUFFER(NULL, 0)
 
-char* buffer_realloc(struct var_len_buffer *self, size_t length) {
+static char* buffer_realloc(struct var_len_buffer *self, size_t length) {
     size_t size = self->size;
 
     if (length <= size) {
@@ -77,70 +61,76 @@ static size_t append_buffer(char *buffer, size_t size, size_t n_items, struct va
     return buffer_len;
 }
 
-struct response* get_response(char *url) {
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    CURL *curl = curl_easy_init();
+int get_init_handle(struct get_handle *self) {
+    self->handle = curl_easy_init();
 
-    if (!curl) {
+    if (!self->handle) {
         EXCEPTION("curl_easy_init() failed");
-        curl_global_cleanup();
-        return NULL;
+        return 1;
     }
 
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    char user_agent[strlen(UA_PREFIX) + 1 + strlen(COLLECT_VERSION) + 1];
-    sprintf(user_agent, "%s/%s", UA_PREFIX, COLLECT_VERSION);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
+    char *fmt = "%s/%s by u/cheeseywhiz";
+    size_t ua_len = strlen(fmt) - 4 + strlen(UA_PREFIX) + strlen(COLLECT_VERSION);
+    char user_agent[ua_len + 1];
+    sprintf(user_agent, fmt, UA_PREFIX, COLLECT_VERSION);
+    curl_easy_setopt(self->handle, CURLOPT_USERAGENT, user_agent);
+    curl_easy_setopt(self->handle, CURLOPT_HEADERFUNCTION, append_buffer);
+    curl_easy_setopt(self->handle, CURLOPT_WRITEFUNCTION, append_buffer);
+    return 0;
+}
 
-    struct var_len_buffer hd_buf = __NEW_BUFFER();
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, append_buffer);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hd_buf);
-    
-    struct var_len_buffer ct_buf = __NEW_BUFFER();
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, append_buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ct_buf);
+void get_cleanup_handle(struct get_handle *self) {
+    curl_easy_cleanup(self->handle);
+}
 
-    struct response *self = NULL;
-    CURLcode res = curl_easy_perform(curl);
+void get_reset_handle(struct get_handle *self) {
+    self->hd_buf = __NEW_BUFFER();
+    curl_easy_setopt(self->handle, CURLOPT_HEADERDATA, &self->hd_buf);
+
+    self->ct_buf = __NEW_BUFFER();
+    curl_easy_setopt(self->handle, CURLOPT_WRITEDATA, &self->ct_buf);
+}
+
+int get_perform(struct get_handle *self, struct response *re, char *url) {
+    get_reset_handle(self);
+    curl_easy_setopt(self->handle, CURLOPT_URL, url);
+    CURLcode res = curl_easy_perform(self->handle);
 
     if (res != CURLE_OK) {
         EXCEPTION("curl_easy_perform failed (%s)", curl_easy_strerror(res));
-        goto cleanup;
+        return 1;
     }
 
-    self = malloc(sizeof(struct response));
-
-    if (!self) {
-        LOG_ERRNO();
-        goto cleanup;
+    if (self->hd_buf.content) {
+        char *pattern = "content-type:[ ]*([^\r\n]*)";
+        re->type = regex_match_one_subexpr(pattern, self->hd_buf.content, REG_ICASE);
+        free(self->hd_buf.content);
+        if (!re->type) return 2;
+    } else {
+        re->type = NULL;
     }
 
-    char *pattern = "content-type:[ ]*([^\r\n]*)";
-    self->type = regex_match_one_subexpr(pattern, hd_buf.content, REG_ICASE);
+    re->content = self->ct_buf.content;
+    re->length = self->ct_buf.length;
+    re->url = url;
+    return 0;
+}
 
-    if (!self->type) {
-        self->type = calloc(1, 1);
+void get_free_response(struct response *self) {
+    free(self->type);
+    free(self->content);
+}
 
-        if (!self->type) {
-            LOG_ERRNO();
-            free(self);
-            self = NULL;
-            goto cleanup;
-        }
-    }
+int get_response(struct response *re, char *url) {
+    struct get_handle handle;
+    int ret;
 
-    self->content = ct_buf.content;
-    self->length = ct_buf.length;
-    self->url = url;
+    ret = get_init_handle(&handle);
+    if (ret) return ret;
 
-    if (hd_buf.content) {
-        free(hd_buf.content);
-    }
-
-cleanup:
-    curl_easy_cleanup(curl);
-    curl_global_cleanup();
-    return self;
+    ret = get_perform(&handle, re, url);
+    curl_easy_cleanup(handle.handle);
+    return ret;
 }
 
 int get_download_response(struct response *self, char *path) {
@@ -176,49 +166,47 @@ static int verify_image(struct response *self) {
 
     if (strlen(error_msg)) {
         DEBUG("%s (%s) (%s)", error_msg, self->url, self->type);
-        return 0;
-    } else {
         return 1;
-    }
-}
-
-struct response* get_image(char *url) {
-    struct response *self = get_response(url);
-
-    if (!self) {
-        return NULL;
-    } else if (verify_image(self)) {
-        return self;
     } else {
-        get_free_response(self);
-        return NULL;
+        return 0;
     }
 }
 
-ju_json_t* get_json(char *url) {
-    struct response *re = get_response(url);
+int get_image(struct response *re, char *url) {
+    int ret;
 
-    if (!re) {
+    ret = get_response(re, url);
+    if (ret) return ret;
+
+    ret = verify_image(re);
+    if (ret) get_free_response(re);
+
+    return ret;
+}
+
+ju_json_t* get_json(struct get_handle *handle, char *url) {
+    struct response re;
+
+    if (get_perform(handle, &re, url)) {
         return NULL;
-    } else if (!re->content || !regex_contains(re->type, "application/json")) {
-        EXCEPTION("content and type check failed");
-        get_free_response(re);
+    } else if (!re.content || !regex_contains(re.type, "application/json")) {
+        EXCEPTION("content or type check failed");
+        get_free_response(&re);
         return NULL;
     }
 
-    ju_json_t *json = ju_parse(re->content);
+    ju_json_t *json = ju_parse(re.content);
 
     if (!json) {
-        get_free_response(re);
+        get_free_response(&re);
         return NULL;
     }
 
-    free(re->type);
-    free(re);
+    free(re.type);
     return json;
 }
 
-void get_free_json(ju_json_t *json) {
-    free(json->json_str);
-    ju_free(json);
+void get_free_json(ju_json_t *self) {
+    free(self->json_str);
+    ju_free(self);
 }

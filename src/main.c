@@ -1,3 +1,4 @@
+#include <curl/curl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,6 +33,7 @@ parameters:\n\
 typedef char* (*subcommand_func)(char *dir, char *url, int raw_flags);
 
 static char* reddit_subcommand(char *dir, char *url, int raw_flags) {
+    curl_global_init(CURL_GLOBAL_DEFAULT);
     raw_listing *listing = raw_listing_url(dir, url);
 
     if (!listing) {
@@ -40,6 +42,7 @@ static char* reddit_subcommand(char *dir, char *url, int raw_flags) {
 
     char *path = raw_listing_next_fallback(listing, raw_flags);
     raw_free_listing(listing);
+    curl_global_cleanup();
     return path;
 }
 

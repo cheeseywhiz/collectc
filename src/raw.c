@@ -55,20 +55,18 @@ char* raw_post_data_get(struct raw_post *self, char *key) {
 }
 
 int raw_post_download(struct raw_post *self) {
-    struct response *re = get_image(self->url);
+    struct response re;
+    int ret;
 
-    if (!re) {
-        return -1;
-    }
+    ret = get_image(&re, self->url);
+    if (ret) return ret;
 
-    int result = get_download_response(re, self->path);
-    get_free_response(re);
+    ret = get_download_response(&re, self->path);
+    get_free_response(&re);
+    if (ret) return ret;
 
-    if (!result) {
-        DEBUG("Collected new image: %s", self->url);
-    }
-
-    return result;
+    DEBUG("Collected new image: %s", self->url);
+    return 0;
 }
 
 static void log_attribute(struct raw_post *self, char *key) {
@@ -164,7 +162,14 @@ raw_listing* raw_listing_data(char *path, ju_json_t *json) {
 }
 
 raw_listing* raw_listing_url(char *path, char *url) {
-    ju_json_t *json = get_json(url);
+    struct get_handle handle;
+
+    if (get_init_handle(&handle)) {
+        return NULL;
+    }
+
+    ju_json_t *json = get_json(&handle, url);
+    get_cleanup_handle(&handle);
 
     if (!json) {
         return NULL;
