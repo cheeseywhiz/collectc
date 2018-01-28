@@ -17,8 +17,8 @@ else
 	AUTOLINK:=
 endif
 
-OBJECTS:=get jsmnutils rand reg path raw random_popper log
-TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest
+OBJECTS:=get auth jsmnutils rand reg path raw random_popper log
+TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest authtest
 SRC_HDR:=collect $(OBJECTS)
 TEST_HDR:=test
 
