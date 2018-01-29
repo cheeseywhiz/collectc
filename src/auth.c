@@ -2,6 +2,7 @@
 
 #include "auth.h"
 #include "path.h"
+#include "jsmnutils.h"
 
 static void init_config_folder_paths(char *folders[]) {
     folders[0] = path_cwd();
@@ -40,9 +41,8 @@ char* auth_config_path(void) {
     char *config_path = NULL;
     int i;
 
-    for (i = 0; i < AUTH_N_CONFIG_FOLDERS; i++) {
+    for (i = 0; i < AUTH_N_CONFIG_FOLDERS && !config_path; i++) {
         config_path = config_file_in_dir(folders[i]);
-        if (config_path) break;
     }
 
     for (; i < AUTH_N_CONFIG_FOLDERS; i++) {
@@ -51,4 +51,13 @@ char* auth_config_path(void) {
     }
 
     return config_path;
+}
+
+ju_json_t* auth_parse_config(void) {
+    char *config_path = auth_config_path();
+    if (!config_path) return NULL;
+
+    ju_json_t *json = ini_parse_path(config_path);
+    free(config_path);
+    return json;
 }
