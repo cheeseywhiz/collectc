@@ -17,8 +17,8 @@ else
 	AUTOLINK:=
 endif
 
-OBJECTS:=get auth jsmnutils rand reg path raw random_popper log
-TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest authtest
+OBJECTS:=get auth jsmnutils rand reg path raw random_popper log ini
+TEST_OBJS:=jsmntest pathtest randtest regtest random_popper_test rawtest authtest testini
 SRC_HDR:=collect $(OBJECTS)
 TEST_HDR:=test
 
@@ -46,7 +46,6 @@ ifeq ($(DEBUG),1)
 	VFLAGS+=-v --leak-check=full --track-origins=yes --show-leak-kinds=all
 	VALGRIND:=-
 else
-	CFLAGS+=
 	VALGRIND:=
 endif
 

@@ -552,6 +552,43 @@ int path_open_write(char *path) {
     return fd;
 }
 
+int path_open_read(char *path) {
+    int flags = O_RDONLY;
+    int fd = open(path, flags);
+
+    if (fd < 0) {
+        LOG_ERRNO();
+    }
+
+    return fd;
+}
+
+char* path_contents(char *path) {
+    struct stat *st = path_stat(path);
+    if (!st) return NULL;
+
+    size_t buffer_size = st->st_size + 1;
+    free(st);
+
+    char *buffer = calloc(buffer_size, 1);
+    if (!buffer) return NULL;
+
+    int fd = path_open_read(path);
+
+    if (fd < 0) {
+        free(buffer);
+        return NULL;
+    }
+
+    if (read(fd, buffer, buffer_size) < 0) {
+        LOG_ERRNO();
+    }
+
+    close(fd);
+    return buffer;
+}
+
+
 int path_touch(char *path) {
     int fd = path_open_write(path);
 

@@ -24,6 +24,8 @@ rp_t* path_tree(char *path);
 int path_rm_tree(char *path);
 char* path_random_file(char *path);
 int path_open_write(char *path);
+int path_open_read(char *path);
+char* path_contents(char *path);
 int path_touch(char *path);
 
 #define MK_MODE_755 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
