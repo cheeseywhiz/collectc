@@ -6,7 +6,7 @@
 
 SMALL_TEST test_parse(void) {
     SCORE_INIT();
-    char *ini_str = path_contents("test/praw.ini");
+    char *ini_str = path_contents("praw.ini");
     ju_json_t *ini = ini_parse(ini_str);
     ASSERT(ini->n_tokens == 21);
     ASSERT(ini->tokens[14].start == 153);

@@ -3,6 +3,8 @@
 #include "auth.h"
 #include "path.h"
 #include "jsmnutils.h"
+#include "ini.h"
+#include "reg.h"
 
 static void init_config_folder_paths(char *folders[]) {
     folders[0] = path_cwd();
@@ -45,7 +47,7 @@ char* auth_config_path(void) {
         config_path = config_file_in_dir(folders[i]);
     }
 
-    for (; i < AUTH_N_CONFIG_FOLDERS; i++) {
+    for (i = 0; i < AUTH_N_CONFIG_FOLDERS; i++) {
         char *path = folders[i];
         if (path) free(path);
     }
@@ -60,4 +62,53 @@ ju_json_t* auth_parse_config(void) {
     ju_json_t *json = ini_parse_path(config_path);
     free(config_path);
     return json;
+}
+
+static char* config_get_key(ju_json_t *config, int profile_index, char *key) {
+    int key_index = ju_object_get(config, profile_index, key);
+    if (key_index < 0) return NULL;
+
+    return regex_str_slice(config->json_str, config->tokens[key_index].start, config->tokens[key_index].end);
+}
+
+#define __GET_KEY(key) \
+    key_copy = config_get_key(config, profile_index, key); \
+    if (!key_copy) { \
+        ret = 2; \
+        goto exit; \
+    }
+
+int auth_init_profile(struct auth_profile *profile, char *name) {
+    ju_json_t *config = auth_parse_config();
+    if (!config) return 1;
+
+    int profile_index = ju_object_get(config, 0, name);
+
+    if (profile_index < 0) {
+        ini_free_path(config);
+        return profile_index;
+    }
+
+    char *key_copy;
+    int ret = 0;
+
+    profile->username = __GET_KEY("username");
+    profile->password = __GET_KEY("password");
+    profile->client_id = __GET_KEY("client_id");
+    profile->secret = __GET_KEY("client_secret");
+
+exit:
+    ini_free_path(config);
+    return ret;
+}
+
+void auth_free_profile(struct auth_profile *self) {
+    free(self->secret);
+    free(self->client_id);
+    free(self->password);
+    free(self->username);
+}
+
+int auth_init_default_profile(struct auth_profile *profile) {
+    return auth_init_profile(profile, "DEFAULT");
 }
