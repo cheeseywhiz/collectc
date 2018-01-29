@@ -5,6 +5,7 @@
 #include "jsmn.h"
 #include "ini.h"
 #include "jsmnutils.h"
+#include "path.h"
 
 #define __JSMN_TOK(type_, start_, end_, size_, parent_) \
     (jsmntok_t) { \
@@ -128,4 +129,23 @@ ju_json_t* ini_parse(char *ini_str) {
         ju_free(self);  /* self->tokens and self */
         return NULL;
     }
+}
+
+ju_json_t* ini_parse_path(char *path) {
+    char *contents = path_contents(path);
+    if (!contents) return NULL;
+
+    ju_json_t *json = ini_parse(contents);
+
+    if (!json) {
+        free(contents);
+        return NULL;
+    }
+
+    return json;
+}
+
+void ini_free_path(ju_json_t *json) {
+    free(json->json_str);
+    ju_free(json);
 }

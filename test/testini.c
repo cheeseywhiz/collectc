@@ -1,5 +1,6 @@
+#include <stdlib.h>
+
 #include "test.h"
-#include "log.h"
 #include "ini.h"
 #include "path.h"
 
