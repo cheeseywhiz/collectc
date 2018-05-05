@@ -190,6 +190,7 @@ ju_json_t* get_json(struct get_handle *handle, char *url) {
     if (get_perform(handle, &re, url)) {
         return NULL;
     } else if (!re.content || !regex_contains(re.type, "application/json")) {
+        ERROR("%s", re.type);
         EXCEPTION("content or type check failed");
         get_free_response(&re);
         return NULL;

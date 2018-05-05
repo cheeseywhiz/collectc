@@ -131,7 +131,7 @@ ju_json_t* ini_parse(char *ini_str) {
     }
 }
 
-ju_json_t* ini_parse_path(char *path) {
+ju_json_t* ini_parse_file(char *path) {
     char *contents = path_contents(path);
     if (!contents) return NULL;
 
@@ -145,7 +145,7 @@ ju_json_t* ini_parse_path(char *path) {
     return json;
 }
 
-void ini_free_path(ju_json_t *json) {
+void ini_free_parsed(ju_json_t *json) {
     free(json->json_str);
     ju_free(json);
 }

@@ -1,10 +1,15 @@
+#include <curl/curl.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
+#include "log.h"
 #include "auth.h"
 #include "path.h"
 #include "jsmnutils.h"
 #include "ini.h"
 #include "reg.h"
+#include "get.h"
 
 static void init_config_folder_paths(char *folders[]) {
     folders[0] = path_cwd();
@@ -59,7 +64,7 @@ ju_json_t* auth_parse_config(void) {
     char *config_path = auth_config_path();
     if (!config_path) return NULL;
 
-    ju_json_t *json = ini_parse_path(config_path);
+    ju_json_t *json = ini_parse_file(config_path);
     free(config_path);
     return json;
 }
@@ -75,17 +80,13 @@ static char* config_get_key(ju_json_t *config, int profile_index, char *key) {
     key_copy = config_get_key(config, profile_index, key); \
     if (!key_copy) { \
         ret = 2; \
-        goto exit; \
+        return ret; \
     }
 
-int auth_init_profile(struct auth_profile *profile, char *name) {
-    ju_json_t *config = auth_parse_config();
-    if (!config) return 1;
-
+int auth_init_profile(struct auth_profile *profile, ju_json_t *config, char *name) {
     int profile_index = ju_object_get(config, 0, name);
 
     if (profile_index < 0) {
-        ini_free_path(config);
         return profile_index;
     }
 
@@ -97,8 +98,6 @@ int auth_init_profile(struct auth_profile *profile, char *name) {
     profile->client_id = __GET_KEY("client_id");
     profile->secret = __GET_KEY("client_secret");
 
-exit:
-    ini_free_path(config);
     return ret;
 }
 
@@ -110,5 +109,83 @@ void auth_free_profile(struct auth_profile *self) {
 }
 
 int auth_init_default_profile(struct auth_profile *profile) {
-    return auth_init_profile(profile, "DEFAULT");
+    ju_json_t *config = auth_parse_config();
+    int ret = auth_init_profile(profile, config, "DEFAULT");
+    ini_free_parsed(config);
+    return ret;
+}
+
+static int init_auth_tok_handle(struct get_handle *handle, ju_json_t *config, char *name) {
+    int ret = get_init_handle(handle);
+    if (ret) return ret;
+
+    struct auth_profile profile;
+    ret = auth_init_profile(&profile, config, name);
+
+    if (ret) {
+        get_cleanup_handle(handle);
+        return ret;
+    }
+
+    char *user_pwd_fmt = "%s:%s";
+    size_t user_pwd_len = strlen(user_pwd_fmt) - 4 + strlen(profile.client_id) + strlen(profile.secret);
+    handle->user_pwd = malloc(user_pwd_len + 1);
+
+    if (!handle->user_pwd) {
+        LOG_ERRNO();
+        return -1;
+    }
+
+    sprintf(handle->user_pwd, user_pwd_fmt, profile.client_id, profile.secret);
+
+    char *post_data_fmt = "grant_type=password&username=%s&password=%s";
+    size_t post_data_len = strlen(post_data_fmt) - 4 + strlen(profile.username) + strlen(profile.password);
+    handle->post_data = malloc(post_data_len + 1);
+
+    if (!handle->post_data) {
+        LOG_ERRNO();
+        return -1;
+    }
+
+    sprintf(handle->post_data, post_data_fmt, profile.username, profile.password);
+
+    curl_easy_setopt(handle->handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+    curl_easy_setopt(handle->handle, CURLOPT_USERPWD, handle->user_pwd);
+    curl_easy_setopt(handle->handle, CURLOPT_POSTFIELDS, handle->post_data);
+
+    auth_free_profile(&profile);
+    return 0;
+}
+
+static void auth_cleanup_handle(struct get_handle *handle) {
+    free(handle->user_pwd);
+    free(handle->post_data);
+    get_cleanup_handle(handle);
+}
+
+char* auth_get_access_token(ju_json_t *config, char *name) {
+    struct get_handle handle;
+    if (init_auth_tok_handle(&handle, config, name)) return NULL;
+
+    ju_json_t *json = get_json(&handle, "https://www.reddit.com/api/v1/access_token");
+    auth_cleanup_handle(&handle);
+    if (!json) return NULL;
+
+    int token_index = ju_object_get(json, 0, "access_token");
+
+    if (token_index < 0) {
+        get_free_json(json);
+        return NULL;
+    }
+
+    char *access_token = regex_str_slice(json->json_str, json->tokens[token_index].start, json->tokens[token_index].end);
+    get_free_json(json);
+    return access_token;
+}
+
+char* auth_get_default_access_token(void) {
+    ju_json_t *config = auth_parse_config();
+    char *token = auth_get_access_token(config, "DEFAULT");
+    ini_free_parsed(config);
+    return token;
 }

@@ -19,39 +19,17 @@ SMALL_TEST test_config_path(void) {
     RETURN_SCORE();
 }
 
-struct case_init_default_profile {
-    char *expected;
-    char *actual;
-};
-
-SMALL_TEST test_init_default_profile(void) {
+SMALL_TEST test_get_access_token(void) {
     SCORE_INIT();
-    int n_cases = 4;
-    struct auth_profile profile;
-
-    if (auth_init_default_profile(&profile)) {
-        EXITFAIL(n_cases);
-    }
-
-    struct case_init_default_profile cases[] = {
-        {"cheeseywhiz", profile.username},
-        {"hunter2", profile.password},
-        {"XxXclientIDXxX", profile.client_id},
-        {"*******", profile.secret}
-    };
-
-    for (int i = 0; i < n_cases; i++) {
-        struct case_init_default_profile case_ = cases[i];
-        ASSERT(!strcmp(case_.expected, case_.actual));
-    }
-
-    auth_free_profile(&profile);
+    char *tok = auth_get_default_access_token();
+    ASSERT(tok);
+    free(tok);
     RETURN_SCORE();
 }
 
 BIG_TEST auth_test_main(void) {
     SCORE_INIT();
     SMALL_REPORT("auth_config_path()", test_config_path());
-    SMALL_REPORT("auth_init_default_profile()", test_init_default_profile());
+    SMALL_REPORT("auth_get_access_token()", test_get_access_token());
     RETURN_SCORE();
 }
