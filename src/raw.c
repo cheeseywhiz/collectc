@@ -69,17 +69,17 @@ int raw_post_download(struct raw_post *self) {
     return 0;
 }
 
-static void log_attribute(struct raw_post *self, char *key) {
-    char *value = raw_post_data_get(self, key);
-    if (!value) return;
-    LOG("%s: %s", key, value);
-    free(value);
-}
+#define LOG_ATTRIBUTE(key) \
+    value = raw_post_data_get(self, key); \
+    if (!value) return; \
+    LOG("%s: %s", key, value); \
+    free(value)
 
 void raw_post_log(struct raw_post *self) {
-    log_attribute(self, "title");
-    log_attribute(self, "permalink");
-    log_attribute(self, "url");
+    char *value;
+    LOG_ATTRIBUTE("title");
+    LOG_ATTRIBUTE("permalink");
+    LOG_ATTRIBUTE("url");
 }
 
 static struct raw_base_listing* new_base_listing(ju_json_t *json) {
