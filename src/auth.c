@@ -110,6 +110,8 @@ void auth_free_profile(struct auth_profile *self) {
 
 int auth_init_default_profile(struct auth_profile *profile) {
     ju_json_t *config = auth_parse_config();
+    if (!config) return -1;
+
     int ret = auth_init_profile(profile, config, "DEFAULT");
     ini_free_parsed(config);
     return ret;
@@ -157,7 +159,7 @@ static int init_auth_tok_handle(struct get_handle *handle, ju_json_t *config, ch
     return 0;
 }
 
-static void auth_cleanup_handle(struct get_handle *handle) {
+static void cleanup_auth_tok_handle(struct get_handle *handle) {
     free(handle->user_pwd);
     free(handle->post_data);
     get_cleanup_handle(handle);
@@ -168,7 +170,7 @@ char* auth_get_access_token(ju_json_t *config, char *name) {
     if (init_auth_tok_handle(&handle, config, name)) return NULL;
 
     ju_json_t *json = get_json(&handle, "https://www.reddit.com/api/v1/access_token");
-    auth_cleanup_handle(&handle);
+    cleanup_auth_tok_handle(&handle);
     if (!json) return NULL;
 
     int token_index = ju_object_get(json, 0, "access_token");
@@ -185,7 +187,62 @@ char* auth_get_access_token(ju_json_t *config, char *name) {
 
 char* auth_get_default_access_token(void) {
     ju_json_t *config = auth_parse_config();
+    if (!config) return NULL;
+
     char *token = auth_get_access_token(config, "DEFAULT");
     ini_free_parsed(config);
     return token;
+}
+
+int auth_init_handle(struct get_handle *handle, ju_json_t *config, char *name) {
+    int ret = get_init_handle(handle);
+    if (ret) return ret;
+
+    char *token = auth_get_access_token(config, name);
+
+    if (!token) {
+        get_cleanup_handle(handle);
+        return -1;
+    }
+
+    char *auth_bearer_fmt = "Authorization: bearer %s";
+    size_t auth_bearer_len = strlen(auth_bearer_fmt) - 2 + strlen(token);
+    char auth_bearer[auth_bearer_len + 1];
+    sprintf(auth_bearer, auth_bearer_fmt, token);
+    free(token);
+
+    handle->headers = NULL;
+    handle->headers = curl_slist_append(handle->headers, auth_bearer);
+
+    if (!handle->headers) {
+        get_cleanup_handle(handle);
+        return -1;
+    }
+
+    curl_easy_setopt(handle->handle, CURLOPT_HTTPHEADER, handle->headers);
+    return 0;
+}
+
+void auth_cleanup_handle(struct get_handle *handle) {
+    curl_slist_free_all(handle->headers);
+    get_cleanup_handle(handle);
+}
+
+int auth_init_default_handle(struct get_handle *handle) {
+    ju_json_t *config = auth_parse_config();
+    if (!config) return -1;
+
+    int ret = auth_init_handle(handle, config, "DEFAULT");
+    ini_free_parsed(config);
+    return ret;
+}
+
+ju_json_t* auth_get_reddit(struct get_handle *handle, char *url) {
+    char *url_fmt = "https://oauth.reddit.com/%s";
+    size_t url_len = strlen(url_fmt) - 2 + strlen(url);
+    char auth_url[url_len + 1];
+    sprintf(auth_url, url_fmt, url);
+
+    ju_json_t *json = get_json(handle, auth_url);
+    return json;
 }

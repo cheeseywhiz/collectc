@@ -18,6 +18,7 @@ struct get_handle {
     struct var_len_buffer ct_buf;
     char *user_pwd;
     char *post_data;
+    struct curl_slist *headers;
 };
 
 int get_init_handle(struct get_handle *self);

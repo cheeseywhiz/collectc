@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     log_init_prog_name(argv);
     rand_reseed();
     char *dir = "~/.cache/collectc";
-    char *url = "https://www.reddit.com/r/EarthPorn/hot/.json?limit=10";
+    char *url = "r/EarthPorn/hot/.json?limit=10";
     raw_flags flags = RAW_RANDOM;
     int verbosity = 0;
     int dry_run = 0;

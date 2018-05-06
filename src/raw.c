@@ -6,6 +6,7 @@
 #include "path.h"
 #include "get.h"
 #include "reg.h"
+#include "auth.h"
 
 struct raw_post* raw_new_post(char *parent_path, ju_json_t *json, int index) {
     struct raw_post *self = malloc(sizeof(struct raw_post));
@@ -164,12 +165,12 @@ raw_listing* raw_listing_data(char *path, ju_json_t *json) {
 raw_listing* raw_listing_url(char *path, char *url) {
     struct get_handle handle;
 
-    if (get_init_handle(&handle)) {
+    if (auth_init_default_handle(&handle)) {
         return NULL;
     }
 
-    ju_json_t *json = get_json(&handle, url);
-    get_cleanup_handle(&handle);
+    ju_json_t *json = auth_get_reddit(&handle, url);
+    auth_cleanup_handle(&handle);
 
     if (!json) {
         return NULL;
