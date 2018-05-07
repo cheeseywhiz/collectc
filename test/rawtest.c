@@ -36,9 +36,10 @@ BIG_TEST raw_test_main(void) {
     ju_json_t *json = ju_parse(data);
     struct raw_post *post = raw_new_post(dir, json, 7);
     SMALL_REPORT("raw_new_post()", test_new_post(post));
-    raw_listing *listing = raw_listing_data(dir, json);
-    SMALL_REPORT("raw_listing_next()", test_listing_next(listing));
-    raw_free_listing(listing);
+    raw_listing listing;
+    raw_init_listing_data(&listing, dir, json);
+    SMALL_REPORT("raw_listing_next()", test_listing_next(&listing));
+    raw_free_listing(&listing);
     raw_free_post(post);
     ju_free(json);
     RETURN_SCORE();

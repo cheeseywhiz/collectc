@@ -34,14 +34,14 @@ typedef char* (*subcommand_func)(char *dir, char *url, int raw_flags);
 
 static char* reddit_subcommand(char *dir, char *url, int raw_flags) {
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    raw_listing *listing = raw_listing_url(dir, url);
+    raw_listing listing;
 
-    if (!listing) {
+    if (raw_init_listing_url(&listing, dir, url)) {
         return NULL;
     }
 
-    char *path = raw_listing_next_fallback(listing, raw_flags);
-    raw_free_listing(listing);
+    char *path = raw_listing_next_fallback(&listing, raw_flags);
+    raw_free_listing(&listing);
     curl_global_cleanup();
     return path;
 }

@@ -133,59 +133,51 @@ static int base_listing_next(struct raw_base_listing *self, int random) {
     return next_item;
 }
 
-raw_listing* raw_listing_data(char *path, ju_json_t *json) {
-    raw_listing *self = malloc(sizeof(raw_listing));
-
-    if (!self) {
-        LOG_ERRNO();
-        return NULL;
-    }
-
+int raw_init_listing_data(raw_listing *self, char *path, ju_json_t *json) {
     self->path = path_norm(path);
 
     if (!self->path) {
-        free(self);
-        return NULL;
+        return -1;
     }
 
     self->url = NULL;
     self->iter = new_base_listing(json);
 
     if (!self->iter) {
-        free(self);
-        return NULL;
+        return -1;
     }
 
     self->free_json = 0;
     self->existing_posts = NULL;
     self->new_posts = NULL;
-    return self;
+    return 0;
 }
 
-raw_listing* raw_listing_url(char *path, char *url) {
+int raw_init_listing_url(raw_listing *self, char *path, char *url) {
     struct get_handle handle;
+    int ret = auth_init_default_handle(&handle);
 
-    if (auth_init_default_handle(&handle)) {
-        return NULL;
+    if (ret) {
+        return ret;
     }
 
     ju_json_t *json = auth_get_reddit(&handle, url);
     auth_cleanup_handle(&handle);
 
     if (!json) {
-        return NULL;
+        return -1;
     }
 
-    raw_listing *self = raw_listing_data(path, json);
+    ret = raw_init_listing_data(self, path, json);
 
-    if (!self) {
+    if (ret) {
         get_free_json(json);
-        return NULL;
+        return ret;
     }
 
     self->url = url;
     self->free_json = 1;
-    return self;
+    return 0;
 }
 
 void raw_free_listing(raw_listing *self) {
@@ -198,7 +190,6 @@ void raw_free_listing(raw_listing *self) {
 
     free_base_listing(self->iter);
     free(self->path);
-    free(self);
 }
 
 static struct raw_post* listing_next_post(raw_listing *self, int random) {
